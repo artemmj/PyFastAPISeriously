@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     DB_NAME: str
 
     @property
-    def db_url(self):
+    def db_url(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     # REDIS_HOST: str | None
@@ -29,5 +29,4 @@ class Settings(BaseSettings):
     )
 
 
-# Получаем параметры для загрузки переменных среды
 settings = Settings()

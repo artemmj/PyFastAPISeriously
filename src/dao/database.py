@@ -1,17 +1,45 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, AsyncGenerator
 
 from sqlalchemy import func, TIMESTAMP, Integer, inspect
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, declared_attr
-from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import (
+    AsyncAttrs,
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
-from src.settings import database_url
+from src.settings import settings
 
-engine = create_async_engine(url=database_url)
-async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+# engine = create_async_engine(url=settings.db_url)
+# async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_engine: AsyncEngine = create_async_engine(
+    url=settings.db_url,
+    # echo=DEV_MODE,
+    pool_size=10,
+    max_overflow=20,
+)
+session_factory: async_sessionmaker[AsyncSession] = async_sessionmaker(
+    bind=async_engine,
+    autoflush=False,
+    autocommit=False,
+    expire_on_commit=False,
+)
+
+
 str_uniq = Annotated[str, mapped_column(unique=True, nullable=False)]
+
+
+# Геттер нужен для использования в FastAPI зависимостях, yield используется для того,
+# чтобы после завершения работы с сессией пошло выполнение дальше yield и вызвался метод
+# __aexit__ асинхронного контекстного менеджера
+async def session_getter() -> AsyncGenerator[AsyncSession, None]:
+    async with session_factory() as session:
+        yield session
 
 
 class Base(AsyncAttrs, DeclarativeBase):
