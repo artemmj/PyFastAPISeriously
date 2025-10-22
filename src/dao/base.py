@@ -77,12 +77,12 @@ class BaseDAO(Generic[T]):
             .values(**values_dict)
             .execution_options(synchronize_session="fetch")
         )
-        result = await self._session.execute(query)
+        await self._session.execute(query)
         try:
             await self._session.flush()
         except SQLAlchemyError as e:
             raise e
-        return result.rowcount
+        return await self.get_one_by_id(id=id)
 
     async def delete(self, id: int):
         query = sqlalchemy_delete(self.model).filter_by(id=id)
