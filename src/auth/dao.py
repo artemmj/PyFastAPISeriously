@@ -67,43 +67,6 @@ class UsersDAO(BaseDAO):
         if query_result.scalar_one_or_none():
             raise UserAlreadyExistsException
 
-    async def add(self, **kwargs):
-        try:
-            new_instance = self.model(**kwargs)
-            self._session.add(new_instance)
-            await self._session.flush()
-            return new_instance
-        except SQLAlchemyError as e:
-            raise e
-
-    async def update(self, id: int, values: BaseModel):
-        values_dict = values.model_dump(exclude_unset=True)
-        query = (
-            update(self.model)
-            .filter_by(id=id)
-            .values(**values_dict)
-            .execution_options(synchronize_session="fetch")
-        )
-        result = await self._session.execute(query)
-
-        try:
-            await self._session.flush()
-        except SQLAlchemyError as e:
-            raise e
-
-        return result.rowcount
-
-    async def delete(self, id: int):
-        query = delete(self.model).filter_by(id=id)
-        result = await self._session.execute(query)
-
-        try:
-            await self._session.flush()
-        except SQLAlchemyError as e:
-            raise e
-
-        return result.rowcount
-
 
 class RolesDAO(BaseDAO):
     model = Role

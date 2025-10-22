@@ -50,15 +50,14 @@ class BaseDAO(Generic[T]):
         except SQLAlchemyError as e:
             raise e
 
-    async def add(self, values: BaseModel):
-        values_dict = values.model_dump(exclude_unset=True)
+    async def add(self, **kwargs):
+        new_instance = self.model(**kwargs)
+        self._session.add(new_instance)
         try:
-            new_instance = self.model(**values_dict)
-            self._session.add(new_instance)
             await self._session.flush()
-            return new_instance
         except SQLAlchemyError as e:
             raise e
+        return new_instance
 
     async def add_many(self, instances: List[BaseModel]):
         values_list = [item.model_dump(exclude_unset=True) for item in instances]
@@ -70,33 +69,29 @@ class BaseDAO(Generic[T]):
         except SQLAlchemyError as e:
             raise e
 
-    async def update(self, filters: BaseModel, values: BaseModel):
-        filter_dict = filters.model_dump(exclude_unset=True)
+    async def update(self, id: int, values: BaseModel):
         values_dict = values.model_dump(exclude_unset=True)
+        query = (
+            sqlalchemy_update(self.model)
+            .filter_by(id=id)
+            .values(**values_dict)
+            .execution_options(synchronize_session="fetch")
+        )
+        result = await self._session.execute(query)
         try:
-            query = (
-                sqlalchemy_update(self.model)
-                .where(*[getattr(self.model, k) == v for k, v in filter_dict.items()])
-                .values(**values_dict)
-                .execution_options(synchronize_session="fetch")
-            )
-            result = await self._session.execute(query)
             await self._session.flush()
-            return result.rowcount
         except SQLAlchemyError as e:
             raise e
+        return result.rowcount
 
-    async def delete(self, filters: BaseModel):
-        filter_dict = filters.model_dump(exclude_unset=True)
-        if not filter_dict:
-            raise ValueError("Нужен хотя бы один фильтр для удаления.")
+    async def delete(self, id: int):
+        query = sqlalchemy_delete(self.model).filter_by(id=id)
+        result = await self._session.execute(query)
         try:
-            query = sqlalchemy_delete(self.model).filter_by(**filter_dict)
-            result = await self._session.execute(query)
             await self._session.flush()
-            return result.rowcount
         except SQLAlchemyError as e:
             raise e
+        return result.rowcount
 
     async def count(self, filters: BaseModel | None = None):
         filter_dict = filters.model_dump(exclude_unset=True) if filters else {}
