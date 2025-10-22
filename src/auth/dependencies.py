@@ -7,7 +7,7 @@ from src.auth.dao import UsersDAO
 from src.auth.models import User
 from src.settings import settings
 from src.dao.database import get_session_without_commit
-from src.exceptions import (
+from src.auth.exceptions import (
     TokenNoFound, NoJwtException, TokenExpiredException, NoUserIdException, ForbiddenException, UserNotFoundException
 )
 

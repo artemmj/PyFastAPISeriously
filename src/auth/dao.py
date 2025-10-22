@@ -6,7 +6,7 @@ from sqlalchemy import asc, desc, select, update, delete
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.auth.filters import UserFilter
-from src.exceptions import UserAlreadyExistsException
+from src.auth.exceptions import UserAlreadyExistsException
 from src.auth.models import Role, User
 from src.dao.base import BaseDAO
 

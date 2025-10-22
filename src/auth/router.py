@@ -19,7 +19,7 @@ from src.auth.schemas import (
 from src.auth.security import authenticate_user, set_tokens
 from src.auth.dao import UsersDAO, RolesDAO
 from src.dao.database import get_session_with_commit, get_session_without_commit
-from src.exceptions import IncorrectEmailOrPasswordException, UserNotFoundException
+from src.auth.exceptions import IncorrectEmailOrPasswordException, UserNotFoundException
 
 router = APIRouter()
 logger = loguru.logger
