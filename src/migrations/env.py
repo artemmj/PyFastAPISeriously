@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from src.settings import settings
 from src.dao.database import Base
 from src.auth.models import User, Role
+from src.products.models import Product
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.db_url)
