@@ -11,9 +11,9 @@ from src.auth.router import router as auth_router
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
     """Управление жизненным циклом приложения."""
-    logger.info("Инициализация приложения...")
+    # logger.info("Инициализация приложения...")
     yield
-    logger.info("Завершение работы приложения...")
+    # logger.info("Завершение работы приложения...")
 
 
 def register_routers(app: FastAPI) -> None:

@@ -17,6 +17,7 @@ from src.settings import settings
 
 # engine = create_async_engine(url=settings.db_url)
 # async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
 async_engine: AsyncEngine = create_async_engine(
     url=settings.db_url,
     # echo=DEV_MODE,

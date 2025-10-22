@@ -14,6 +14,7 @@ from src.auth.schemas import (
     UserModelInfoSchema,
     UserModelRegisterSchema,
     RoleModelSchema,
+    UserModelUpdateSchema,
 )
 from src.auth.security import authenticate_user, set_tokens
 from src.auth.dao import UsersDAO, RolesDAO
@@ -46,13 +47,13 @@ async def get_user_by_id(
     id: int,
     session: AsyncSession = Depends(get_session_without_commit),
 ):
-    instance = await UsersDAO(session).find_one_or_none_by_id(id=id)
+    instance = await UsersDAO(session).get_one_by_id(id=id)
     if not instance:
         raise UserNotFoundException
     return instance
 
 
-@router.post("/users/register/", response_model=UserModelInfoSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/users/register", response_model=UserModelInfoSchema, status_code=status.HTTP_201_CREATED)
 async def register_user(
     user_data: UserModelRegisterSchema,
     session: AsyncSession = Depends(get_session_with_commit),
@@ -66,14 +67,14 @@ async def register_user(
     return JSONResponse(new_user.to_dict(), status_code=status.HTTP_201_CREATED)
 
 
-@router.post("/login/")
+@router.post("/login")
 async def login_user(
     response: Response,
     user_data: UserModelAuthSchema,
     session: AsyncSession = Depends(get_session_without_commit)
 ) -> dict:
     dao = UsersDAO(session)
-    user = await dao.find_one_or_none(filters=EmailModel(email=user_data.email))
+    user = await dao.get_one_by_filters(filters=EmailModel(email=user_data.email))
 
     if not (user and await authenticate_user(user=user, password=user_data.password)):
         raise IncorrectEmailOrPasswordException
@@ -85,6 +86,32 @@ async def login_user(
     }
 
 
-@router.get("/me/", response_model=UserModelInfoSchema)
+@router.get("/me", response_model=UserModelInfoSchema)
 async def get_me(user_data: User = Depends(get_current_user)):
     return user_data
+
+
+@router.put('/users/{id}')
+@router.patch('/users/{id}')
+async def update_user(
+    id: int,
+    new_user_data: UserModelUpdateSchema,
+    session: AsyncSession = Depends(get_session_with_commit),
+):
+    dao = UsersDAO(session)
+    upd_user = await dao.get_one_by_id(id=id)
+    if not upd_user:
+        raise UserNotFoundException
+    return await dao.update(id=id, values=new_user_data)
+
+
+@router.delete('/users/{id}')
+async def delete_user(
+    id: int,
+    session: AsyncSession = Depends(get_session_with_commit),
+):
+    dao = UsersDAO(session)
+    upd_user = await dao.get_one_by_id(id=id)
+    if not upd_user:
+        raise UserNotFoundException
+    return await dao.delete(id=id)

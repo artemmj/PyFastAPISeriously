@@ -5,7 +5,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete, func
-from loguru import logger
 
 from src.dao.database import Base
 
@@ -20,26 +19,28 @@ class BaseDAO(Generic[T]):
         if self.model is None:
             raise ValueError("Модель должна быть указана в дочернем классе")
 
-    async def find_one_or_none_by_id(self, id: int):
+    async def get_one_by_id(self, id: int):
+        """Получить одну запись по айди, либо None."""
+        query = select(self.model).filter_by(id=id)
+        result = await self._session.execute(query)
         try:
-            query = select(self.model).filter_by(id=id)
-            result = await self._session.execute(query)
             record = result.scalar_one_or_none()
-            return record
         except SQLAlchemyError as e:
             raise e
+        return record
 
-    async def find_one_or_none(self, filters: BaseModel):
+    async def get_one_by_filters(self, filters: BaseModel):
+        """Получить одну запись по фильтрам, либо None."""
         filter_dict = filters.model_dump(exclude_unset=True)
+        query = select(self.model).filter_by(**filter_dict)
         try:
-            query = select(self.model).filter_by(**filter_dict)
             result = await self._session.execute(query)
             record = result.scalar_one_or_none()
-            return record
         except SQLAlchemyError as e:
             raise e
+        return record
 
-    async def find_all_(self, filters: BaseModel | None = None):
+    async def find_all(self, filters: BaseModel | None = None):
         filter_dict = filters.model_dump(exclude_unset=True) if filters else {}
         try:
             query = select(self.model).filter_by(**filter_dict)

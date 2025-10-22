@@ -1,5 +1,5 @@
 import re
-from typing import Self
+from typing import Optional, Self
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
@@ -61,3 +61,13 @@ class UserModelRegisterSchema(UserModelBaseSchema):
 
 class UserModelAuthSchema(EmailModel):
     password: str = Field(min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков")
+
+
+class UserModelUpdateSchema(BaseModel):
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role_id: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=False)

@@ -2,7 +2,7 @@ import loguru
 
 from fastapi import Query
 from pydantic import BaseModel
-from sqlalchemy import asc, desc, select
+from sqlalchemy import asc, desc, select, update, delete
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.auth.filters import UserFilter
@@ -17,6 +17,7 @@ class UsersDAO(BaseDAO):
     model = User
 
     async def find_all(self, filters: UserFilter, sorting: Query = None):
+        """Находит всех юзеров, по фильтрам и с сортировкой."""
         query = select(self.model)
 
         # Фильтрация
@@ -58,6 +59,14 @@ class UsersDAO(BaseDAO):
         records = result.scalars().all()
         return records
 
+    async def check_unique_user(self, phone: str, email: str):
+        """Проверяет уникальность полей для регистрации юзера."""
+        query_result = await self._session.execute(
+            select(User).filter((User.email == email) | (User.phone_number == phone))
+        )
+        if query_result.scalar_one_or_none():
+            raise UserAlreadyExistsException
+
     async def add(self, **kwargs):
         try:
             new_instance = self.model(**kwargs)
@@ -67,13 +76,33 @@ class UsersDAO(BaseDAO):
         except SQLAlchemyError as e:
             raise e
 
-    async def check_unique_user(self, phone: str, email: str):
-        """Проверяет уникальность полей для регистрации юзера."""
-        query_result = await self._session.execute(
-            select(User).filter((User.email == email) | (User.phone_number == phone))
+    async def update(self, id: int, values: BaseModel):
+        values_dict = values.model_dump(exclude_unset=True)
+        query = (
+            update(self.model)
+            .filter_by(id=id)
+            .values(**values_dict)
+            .execution_options(synchronize_session="fetch")
         )
-        if query_result.scalar_one_or_none():
-            raise UserAlreadyExistsException
+        result = await self._session.execute(query)
+
+        try:
+            await self._session.flush()
+        except SQLAlchemyError as e:
+            raise e
+
+        return result.rowcount
+
+    async def delete(self, id: int):
+        query = delete(self.model).filter_by(id=id)
+        result = await self._session.execute(query)
+
+        try:
+            await self._session.flush()
+        except SQLAlchemyError as e:
+            raise e
+
+        return result.rowcount
 
 
 class RolesDAO(BaseDAO):
