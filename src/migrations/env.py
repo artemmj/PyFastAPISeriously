@@ -7,7 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from src.settings import settings
-from src.dao.database import Base
+from src.dao.base_model import Base
 from src.auth.models import User, Role
 from src.products.models import Product
 

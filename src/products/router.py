@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.dao.database import get_session_without_commit, get_session_with_commit
 from src.products.dao import ProductsDAO
 from src.products.exceptions import ProductNotFoundException
-from src.products.schemas import ProductBaseModelSchema, ProductCreateModelSchema, ProductUpdateModelSchema
+from src.products.schemas import ProductBaseModelSchema, ProductCreateUpdateModelSchema
 
 router = APIRouter()
 logger = loguru.logger
@@ -21,7 +21,7 @@ async def get_all_products(session: AsyncSession = Depends(get_session_without_c
 
 @router.post('')
 async def create_product(
-    product_data: ProductCreateModelSchema,
+    product_data: ProductCreateUpdateModelSchema,
     session: AsyncSession = Depends(get_session_with_commit),
 ) -> ProductBaseModelSchema:
     new_product = await ProductsDAO(session).add(**product_data.model_dump(exclude_unset=True))
@@ -32,7 +32,7 @@ async def create_product(
 @router.patch('/{id}')
 async def update_product(
     id: int,
-    new_product_data: ProductUpdateModelSchema,
+    new_product_data: ProductCreateUpdateModelSchema,
     session: AsyncSession = Depends(get_session_with_commit),
 ) -> ProductBaseModelSchema:
     dao = ProductsDAO(session)

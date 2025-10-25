@@ -5,7 +5,8 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
-from src.auth.router import router as auth_router
+from src.auth.router.auth import router as auth_router
+from src.auth.router.users import router as users_router
 from src.products.router import router as products_router
 
 logger = loguru.logger
@@ -20,8 +21,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
 
 
 def register_routers(app: FastAPI) -> None:
-    app.include_router(auth_router, prefix='/auth', tags=["Auth / Users"])
-    app.include_router(products_router, prefix='/products', tags=["Products"])
+    app.include_router(auth_router, prefix='/auth', tags=["Авторизация и аутентификация"])
+    app.include_router(users_router, prefix='/users', tags=["Пользователи"])
+    app.include_router(products_router, prefix='/products', tags=["Товары"])
 
 
 def create_app() -> FastAPI:

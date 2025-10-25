@@ -1,7 +1,6 @@
-from sqlalchemy import text, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped
 
-from src.dao.database import Base, str_uniq
+from src.dao.base_model import Base
 
 
 class Product(Base):

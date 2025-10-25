@@ -1,36 +1,38 @@
 import loguru
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.dao import RolesDAO, UsersDAO
 from src.auth.dependencies import get_current_user
 from src.auth.models import User
 from src.auth.filters import UserFilter
 from src.auth.schemas import (
-    EmailModel,
-    UserModelAuthSchema,
+    RoleModelSchema,
     UserModelInfoSchema,
     UserModelRegisterSchema,
-    RoleModelSchema,
     UserModelUpdateSchema,
 )
-from src.auth.security import authenticate_user, set_tokens
-from src.auth.dao import UsersDAO, RolesDAO
 from src.dao.database import get_session_with_commit, get_session_without_commit
-from src.auth.exceptions import IncorrectEmailOrPasswordException, UserNotFoundException
+from src.auth.exceptions import UserNotFoundException
 
 router = APIRouter()
 logger = loguru.logger
 
 
-@router.get("/users/roles")
+@router.get('/me')
+async def get_me(user_data: User = Depends(get_current_user)) -> UserModelInfoSchema:
+    return user_data
+
+
+@router.get("/roles")
 async def get_all_roles(session: AsyncSession = Depends(get_session_without_commit)) -> List[RoleModelSchema]:
     return await RolesDAO(session).find_all()
 
 
-@router.get('/users')
+@router.get('')
 async def get_all_users(
     filters: UserFilter = Depends(),
     sorting: Optional[str] = Query(
@@ -42,7 +44,7 @@ async def get_all_users(
     return await UsersDAO(session).find_all(filters=filters, sorting=sorting)
 
 
-@router.get("/users/{id}")
+@router.get("/{id}")
 async def get_user_by_id(
     id: int,
     session: AsyncSession = Depends(get_session_without_commit),
@@ -53,7 +55,7 @@ async def get_user_by_id(
     return instance
 
 
-@router.post("/users/register", status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(
     user_data: UserModelRegisterSchema,
     session: AsyncSession = Depends(get_session_with_commit),
@@ -67,32 +69,8 @@ async def register_user(
     return JSONResponse(new_user.to_dict(), status_code=status.HTTP_201_CREATED)
 
 
-@router.post("/login")
-async def login_user(
-    response: Response,
-    user_data: UserModelAuthSchema,
-    session: AsyncSession = Depends(get_session_without_commit)
-) -> dict:
-    dao = UsersDAO(session)
-    user = await dao.get_one_by_filters(filters=EmailModel(email=user_data.email))
-
-    if not (user and await authenticate_user(user=user, password=user_data.password)):
-        raise IncorrectEmailOrPasswordException
-
-    atoken, rtoken = set_tokens(response, user.id)
-    return {
-        'access_token': atoken,
-        'refresh_token': rtoken,
-    }
-
-
-@router.get('/me')
-async def get_me(user_data: User = Depends(get_current_user)) -> UserModelInfoSchema:
-    return user_data
-
-
-@router.put('/users/{id}')
-@router.patch('/users/{id}')
+@router.put('/{id}')
+@router.patch('/{id}')
 async def update_user(
     id: int,
     new_user_data: UserModelUpdateSchema,
@@ -105,7 +83,7 @@ async def update_user(
     return await dao.update(id=id, values=new_user_data)
 
 
-@router.delete('/users/{id}')
+@router.delete('/{id}')
 async def delete_user(
     id: int,
     session: AsyncSession = Depends(get_session_with_commit),

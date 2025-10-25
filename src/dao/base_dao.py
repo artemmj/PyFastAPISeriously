@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete, func
 
-from src.dao.database import Base
+from src.dao.base_model import Base
 
 T = TypeVar("T", bound=Base)
 

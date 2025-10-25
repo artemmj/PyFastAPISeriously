@@ -13,16 +13,7 @@ class ProductBaseModelSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ProductCreateModelSchema(BaseModel):
-    title: Optional[str] = None
-    article: Optional[str] = None
-    price: Optional[float] = None
-    description: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ProductUpdateModelSchema(BaseModel):
+class ProductCreateUpdateModelSchema(BaseModel):
     title: Optional[str] = None
     article: Optional[str] = None
     price: Optional[float] = None

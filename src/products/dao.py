@@ -1,4 +1,4 @@
-from src.dao.base import BaseDAO
+from src.dao.base_dao import BaseDAO
 from src.products.models import Product
 
 

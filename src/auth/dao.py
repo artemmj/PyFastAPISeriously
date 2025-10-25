@@ -1,14 +1,13 @@
 import loguru
 
 from fastapi import Query
-from pydantic import BaseModel
-from sqlalchemy import asc, desc, select, update, delete
+from sqlalchemy import asc, desc, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.auth.filters import UserFilter
 from src.auth.exceptions import UserAlreadyExistsException
 from src.auth.models import Role, User
-from src.dao.base import BaseDAO
+from src.dao.base_dao import BaseDAO
 
 logger = loguru.logger
 
