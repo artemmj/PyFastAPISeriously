@@ -23,8 +23,11 @@ logger = loguru.logger
 
 
 @router.get('/me')
-async def get_me(user_data: User = Depends(get_current_user)) -> UserModelInfoSchema:
-    return user_data
+async def get_me(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session_without_commit),
+) -> UserModelInfoSchema:
+    return await UsersDAO(session).get_user_with_cart(user.id)
 
 
 @router.get("/roles")

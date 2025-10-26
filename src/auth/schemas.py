@@ -1,15 +1,10 @@
 import re
 from typing import Optional, Self
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from src.auth.security import get_password_hash
-
-
-class EmailModel(BaseModel):
-    email: EmailStr = Field(description="Электронная почта")
-
-    model_config = ConfigDict(from_attributes=True)
+from src.purchase.cart.schemas import CartSchema
 
 
 class RoleModelSchema(BaseModel):
@@ -19,11 +14,13 @@ class RoleModelSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserModelBaseSchema(BaseModel):
+class UserModelRegisterSchema(BaseModel):
     email: EmailStr = Field(description="Электронная почта")
     phone_number: str = Field(description="Номер телефона в международном формате, начинающийся с '+'")
     first_name: str = Field(min_length=3, max_length=50, description="Имя, от 3 до 50 символов")
     last_name: str = Field(min_length=3, max_length=50, description="Фамилия, от 3 до 50 символов")
+    password: str = Field(min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков")
+    confirm_password: str = Field(min_length=5, max_length=50, description="Повторите пароль")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -33,30 +30,35 @@ class UserModelBaseSchema(BaseModel):
             raise ValueError('Номер телефона должен начинаться с "+" и содержать от 5 до 15 цифр')
         return value
 
-
-class UserModelInfoSchema(UserModelBaseSchema):
-    id: int = Field()
-    role: RoleModelSchema = Field()
-
-    # @computed_field
-    # def role_name(self) -> str:
-    #     return self.role.name
-
-    # @computed_field
-    # def role_id(self) -> int:
-    #     return self.role.id
-
-
-class UserModelRegisterSchema(UserModelBaseSchema):
-    password: str = Field(min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков")
-    confirm_password: str = Field(min_length=5, max_length=50, description="Повторите пароль")
-
     @model_validator(mode="after")
     def check_password(self) -> Self:
         if self.password != self.confirm_password:
             raise ValueError("Пароли не совпадают")
         self.password = get_password_hash(self.password)  # хешируем пароль до сохранения в базе данных
         return self
+
+
+class UserModelBaseSchema(BaseModel):
+    id: int = Field()
+    email: EmailStr = Field()
+    phone_number: str = Field()
+    first_name: str = Field()
+    last_name: str = Field()
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserModelInfoSchema(UserModelBaseSchema):
+    role_id: int = Field()
+    cart: CartSchema | None = Field()
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EmailModel(BaseModel):
+    email: EmailStr = Field(description="Электронная почта")
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserModelAuthSchema(EmailModel):

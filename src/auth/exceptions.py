@@ -20,7 +20,7 @@ UserIdNotFoundException = HTTPException(
 
 # Неверная почта или пароль
 IncorrectEmailOrPasswordException = HTTPException(
-    status_code=status.HTTP_400_BAD_REQUEST,
+    status_code=status.HTTP_401_UNAUTHORIZED,
     detail='Неверная почта или пароль'
 )
 
@@ -32,15 +32,14 @@ TokenExpiredException = HTTPException(
 
 # Некорректный формат токена
 InvalidTokenFormatException = HTTPException(
-    status_code=status.HTTP_400_BAD_REQUEST,
+    status_code=status.HTTP_401_UNAUTHORIZED,
     detail='Некорректный формат токена'
 )
 
-
 # Токен отсутствует в заголовке
 TokenNoFound = HTTPException(
-    status_code=status.HTTP_400_BAD_REQUEST,
-    detail='Токен отсутствует в заголоках'
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail='Нет токена'
 )
 
 # Невалидный JWT токен

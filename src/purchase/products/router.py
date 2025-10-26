@@ -6,9 +6,9 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dao.database import get_session_without_commit, get_session_with_commit
-from src.products.dao import ProductsDAO
-from src.products.exceptions import ProductNotFoundException
-from src.products.schemas import ProductBaseModelSchema, ProductCreateUpdateModelSchema
+from src.purchase.products.dao import ProductsDAO
+from src.purchase.exceptions import ProductNotFoundException
+from src.purchase.products.schemas import ProductBaseModelSchema, ProductCreateUpdateModelSchema
 
 router = APIRouter()
 logger = loguru.logger

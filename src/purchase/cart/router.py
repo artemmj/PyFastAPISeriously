@@ -1,0 +1,74 @@
+import loguru
+
+from typing import List
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.auth.models import User
+from src.auth.dependencies import get_current_user
+from src.dao.database import get_session_without_commit, get_session_with_commit
+from src.purchase.cart.dao import CartsDAO
+from src.purchase.cart.schemas import CartSchema, CartUserIdSchema
+from src.purchase.exceptions import ProductNotFoundException
+from src.purchase.products.dao import ProductsDAO
+
+router = APIRouter()
+logger = loguru.logger
+
+
+@router.get('')
+async def get_all_carts(session: AsyncSession = Depends(get_session_without_commit)) -> List[CartSchema]:
+    return await CartsDAO(session).find_all()
+
+
+@router.post('')
+async def create_cart(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session_without_commit),
+) -> CartSchema:
+    carts_dao = CartsDAO(session)
+    cart = await carts_dao.get_one_by_filters(CartUserIdSchema(user_id=user.id))
+    if not cart:
+        await carts_dao.add(user_id=user.id)
+    return await CartsDAO(session).get_user_cart(user.id)
+
+
+@router.get('/my')
+async def get_my_cart(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session_without_commit),
+) -> CartSchema:
+    carts_dao = CartsDAO(session)
+    if not await carts_dao.get_one_by_filters(CartUserIdSchema(user_id=user.id)):
+        await carts_dao.add(user_id=user.id)
+    return await CartsDAO(session).get_user_cart(user.id)
+
+
+@router.post('/add_product/{product_id}')
+async def add_product(
+    product_id: int,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session_with_commit),
+) -> CartSchema:
+    if not await ProductsDAO(session).get_one_by_id(id=product_id):
+        raise ProductNotFoundException
+
+    carts_dao = CartsDAO(session)
+    cart = await carts_dao.get_one_by_filters(CartUserIdSchema(user_id=user.id))
+    await carts_dao.add_product(cart.id, product_id)
+    return await carts_dao.get_user_cart(user.id)
+
+
+@router.post('/remove_product/{product_id}')
+async def remove_product(
+    product_id: int,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session_with_commit),
+) -> CartSchema:
+    if not await ProductsDAO(session).get_one_by_id(id=product_id):
+        raise ProductNotFoundException
+
+    carts_dao = CartsDAO(session)
+    cart = await carts_dao.get_one_by_filters(CartUserIdSchema(user_id=user.id))
+    await carts_dao.remove_product(cart.id, product_id)
+    return await carts_dao.get_user_cart(user.id)

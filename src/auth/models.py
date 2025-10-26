@@ -2,6 +2,7 @@ from sqlalchemy import text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.dao.base_model import Base, str_uniq
+from src.purchase.cart.models import Cart
 
 
 class Role(Base):
@@ -18,8 +19,14 @@ class User(Base):
     last_name: Mapped[str]
     email: Mapped[str_uniq]
     password: Mapped[str]
+
     role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'), default=1, server_default=text("1"))
     role: Mapped["Role"] = relationship("Role", back_populates="users", lazy="joined")
+
+    # Связь "один к одному" с CartSchema
+    # uselist=False означает один к одному
+    # cascade="all, delete-orphan" означает, что корзина удаляется вместе с пользователем
+    cart: Mapped["Cart"] = relationship("Cart", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(id={self.id})"

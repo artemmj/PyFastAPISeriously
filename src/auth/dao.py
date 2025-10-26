@@ -2,18 +2,28 @@ import loguru
 
 from fastapi import Query
 from sqlalchemy import asc, desc, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.auth.filters import UserFilter
 from src.auth.exceptions import UserAlreadyExistsException
 from src.auth.models import Role, User
 from src.dao.base_dao import BaseDAO
+from src.purchase.cart.models import Cart, CartItem
 
 logger = loguru.logger
 
 
 class UsersDAO(BaseDAO):
     model = User
+
+    async def check_unique_user(self, phone: str, email: str):
+        """Проверяет уникальность полей для регистрации юзера."""
+        query_result = await self._session.execute(
+            select(User).filter((User.email == email) | (User.phone_number == phone))
+        )
+        if query_result.scalar_one_or_none():
+            raise UserAlreadyExistsException
 
     async def find_all(self, filters: UserFilter, sorting: Query = None):
         """Находит всех юзеров, по фильтрам и с сортировкой."""
@@ -58,13 +68,27 @@ class UsersDAO(BaseDAO):
         records = result.scalars().all()
         return records
 
-    async def check_unique_user(self, phone: str, email: str):
-        """Проверяет уникальность полей для регистрации юзера."""
-        query_result = await self._session.execute(
-            select(User).filter((User.email == email) | (User.phone_number == phone))
+    async def get_user_with_cart(self, user_id: int):
+        """Получить пользователя с развернутой корзиной."""
+        stmt = (
+            select(User)
+            .options(
+                selectinload(User.cart)
+                .selectinload(Cart.items)
+                .selectinload(CartItem.product)
+            )
+            .where(User.id == user_id)
         )
-        if query_result.scalar_one_or_none():
-            raise UserAlreadyExistsException
+        # Выполняем запрос
+        result = await self._session.execute(stmt)
+        user = result.scalar_one_or_none()
+
+        # Pydantic автоматически сериализует user в JSON,
+        # включая подгруженные cart, items и product,
+        # благодаря from_attributes=True и структуре схем.
+        # Важно, чтобы схема User содержала поле cart: Optional[schemas.CartSchema]
+
+        return user # Это ORM объект User, но FastAPI знает, как его сериализовать
 
 
 class RolesDAO(BaseDAO):

@@ -23,51 +23,36 @@ class BaseDAO(Generic[T]):
         """Получить одну запись по айди, либо None."""
         query = select(self.model).filter_by(id=id)
         result = await self._session.execute(query)
-        try:
-            record = result.scalar_one_or_none()
-        except SQLAlchemyError as e:
-            raise e
+        record = result.scalar_one_or_none()
         return record
 
     async def get_one_by_filters(self, filters: BaseModel):
         """Получить одну запись по фильтрам, либо None."""
         filter_dict = filters.model_dump(exclude_unset=True)
         query = select(self.model).filter_by(**filter_dict)
-        try:
-            result = await self._session.execute(query)
-            record = result.scalar_one_or_none()
-        except SQLAlchemyError as e:
-            raise e
+        result = await self._session.execute(query)
+        record = result.scalar_one_or_none()
         return record
 
     async def find_all(self, filters: BaseModel | None = None):
         filter_dict = filters.model_dump(exclude_unset=True) if filters else {}
-        try:
-            query = select(self.model).filter_by(**filter_dict)
-            result = await self._session.execute(query)
-            records = result.scalars().all()
-            return records
-        except SQLAlchemyError as e:
-            raise e
+        query = select(self.model).filter_by(**filter_dict)
+        result = await self._session.execute(query)
+        records = result.scalars().all()
+        return records
 
     async def add(self, **kwargs):
         new_instance = self.model(**kwargs)
         self._session.add(new_instance)
-        try:
-            await self._session.flush()
-        except SQLAlchemyError as e:
-            raise e
+        await self._session.flush()
         return new_instance
 
     async def add_many(self, instances: List[BaseModel]):
         values_list = [item.model_dump(exclude_unset=True) for item in instances]
-        try:
-            new_instances = [self.model(**values) for values in values_list]
-            self._session.add_all(new_instances)
-            await self._session.flush()
-            return new_instances
-        except SQLAlchemyError as e:
-            raise e
+        new_instances = [self.model(**values) for values in values_list]
+        self._session.add_all(new_instances)
+        await self._session.flush()
+        return new_instances
 
     async def update(self, id: int, values: BaseModel):
         values_dict = values.model_dump(exclude_unset=True)
@@ -78,49 +63,37 @@ class BaseDAO(Generic[T]):
             .execution_options(synchronize_session="fetch")
         )
         await self._session.execute(query)
-        try:
-            await self._session.flush()
-        except SQLAlchemyError as e:
-            raise e
+        await self._session.flush()
         return await self.get_one_by_id(id=id)
 
     async def delete(self, id: int):
         query = sqlalchemy_delete(self.model).filter_by(id=id)
         result = await self._session.execute(query)
-        try:
-            await self._session.flush()
-        except SQLAlchemyError as e:
-            raise e
+        await self._session.flush()
         return result.rowcount
 
     async def count(self, filters: BaseModel | None = None):
         filter_dict = filters.model_dump(exclude_unset=True) if filters else {}
-        try:
-            query = select(func.count(self.model.id)).filter_by(**filter_dict)
-            result = await self._session.execute(query)
-            count = result.scalar()
-            return count
-        except SQLAlchemyError as e:
-            raise e
+        query = select(func.count(self.model.id)).filter_by(**filter_dict)
+        result = await self._session.execute(query)
+        count = result.scalar()
+        return count
 
     async def bulk_update(self, records: List[BaseModel]):
-        try:
-            updated_count = 0
-            for record in records:
-                record_dict = record.model_dump(exclude_unset=True)
-                if 'id' not in record_dict:
-                    continue
+        updated_count = 0
+        for record in records:
+            record_dict = record.model_dump(exclude_unset=True)
+            if 'id' not in record_dict:
+                continue
 
-                update_data = {k: v for k, v in record_dict.items() if k != 'id'}
-                stmt = (
-                    sqlalchemy_update(self.model)
-                    .filter_by(id=record_dict['id'])
-                    .values(**update_data)
-                )
-                result = await self._session.execute(stmt)
-                updated_count += result.rowcount
+            update_data = {k: v for k, v in record_dict.items() if k != 'id'}
+            stmt = (
+                sqlalchemy_update(self.model)
+                .filter_by(id=record_dict['id'])
+                .values(**update_data)
+            )
+            result = await self._session.execute(stmt)
+            updated_count += result.rowcount
 
-            await self._session.flush()
-            return updated_count
-        except SQLAlchemyError as e:
-            raise e
+        await self._session.flush()
+        return updated_count
