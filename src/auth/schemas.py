@@ -73,3 +73,8 @@ class UserModelUpdateSchema(BaseModel):
     role_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=False)
+
+
+class AuthLoginSchema(BaseModel):
+    access_token: str
+    refresh_token: str

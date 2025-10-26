@@ -11,12 +11,6 @@ class Cart(Base):
     # Связь "один ко многим" с CartItem
     items = relationship("CartItem", back_populates="cart", cascade="all, delete-orphan")
 
-    # Опционально: поле для статуса корзины (например, 'active', 'ordered', 'abandoned')
-    # status = Column(String, default='active')
-    # status: Mapped[str] = mapped_column(String, default='active')
-    # Если добавляете статус, уникальность user_id может быть не нужна,
-    # и можно использовать CartItem с флагом active=True/False или внешнюю сущность Order.
-
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(id={self.id}, user_id={self.user_id})"
 

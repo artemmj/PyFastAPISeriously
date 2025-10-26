@@ -72,3 +72,14 @@ async def remove_product(
     cart = await carts_dao.get_one_by_filters(CartUserIdSchema(user_id=user.id))
     await carts_dao.remove_product(cart.id, product_id)
     return await carts_dao.get_user_cart(user.id)
+
+
+@router.post('/clear_cart')
+async def clear_cart(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session_with_commit),
+):
+    dao = CartsDAO(session)
+    cart = await dao.get_one_by_filters(CartUserIdSchema(user_id=user.id))
+    await dao.clear_products(user.id, cart.id)
+    return cart

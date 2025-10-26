@@ -1,5 +1,5 @@
 import loguru
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import selectinload
 
 from src.dao.base_dao import BaseDAO
@@ -17,10 +17,7 @@ class CartsDAO(BaseDAO):
         """Получить корзину пользователя детально с товарами."""
         stmt = (
             select(Cart)
-            .options(
-                selectinload(Cart.items)
-                .selectinload(CartItem.product),
-            )
+            .options(selectinload(Cart.items).selectinload(CartItem.product))
             .where(Cart.user_id == user_id)
         )
         result = await self._session.execute(stmt)
@@ -70,9 +67,16 @@ class CartsDAO(BaseDAO):
         await self._session.refresh(cart)
         return cart
 
+    async def clear_products(self, user_id: int, cart_id: int) -> None:
+        """Очистить корзину от всех товаров."""
+        stmt = delete(CartItem).filter_by(cart_id=cart_id)
+        await self._session.execute(stmt)
+        await self._session.flush()
+        return await self.get_user_cart(user_id)
+
 
 class CartItemsDAO(BaseDAO):
-    model  = CartItem
+    model = CartItem
 
     async def get_by_cart_and_product(self, cart_id: int, product_id: int) -> CartItem:
         query = select(self.model).filter_by(cart_id=cart_id, product_id=product_id)

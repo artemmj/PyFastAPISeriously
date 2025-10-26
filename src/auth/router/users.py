@@ -22,17 +22,12 @@ router = APIRouter()
 logger = loguru.logger
 
 
-@router.get('/me')
-async def get_me(
+@router.get('/about')
+async def get_about(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session_without_commit),
 ) -> UserModelInfoSchema:
     return await UsersDAO(session).get_user_with_cart(user.id)
-
-
-@router.get("/roles")
-async def get_all_roles(session: AsyncSession = Depends(get_session_without_commit)) -> List[RoleModelSchema]:
-    return await RolesDAO(session).find_all()
 
 
 @router.get('')
@@ -56,21 +51,6 @@ async def get_user_by_id(
     if not instance:
         raise UserNotFoundException
     return instance
-
-
-@router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register_user(
-    user_data: UserModelRegisterSchema,
-    session: AsyncSession = Depends(get_session_with_commit),
-) -> UserModelInfoSchema:
-    dao = UsersDAO(session)
-    user_data_dict = user_data.model_dump()
-    await dao.check_unique_user(user_data_dict.get('phone_number'), user_data_dict.get('email'))
-    user_data_dict.pop('confirm_password', None)
-    new_user = await dao.add(**user_data_dict)
-    await session.refresh(new_user)
-    return JSONResponse(new_user.to_dict(), status_code=status.HTTP_201_CREATED)
-
 
 @router.put('/{id}')
 @router.patch('/{id}')
@@ -96,3 +76,8 @@ async def delete_user(
     if not del_user:
         raise UserNotFoundException
     return await dao.delete(id=id)
+
+
+@router.get("/roles")
+async def get_all_roles(session: AsyncSession = Depends(get_session_without_commit)) -> List[RoleModelSchema]:
+    return await RolesDAO(session).find_all()
