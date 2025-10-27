@@ -16,12 +16,12 @@ logger = loguru.logger
 
 @router.get('')
 async def get_all_orders(session: AsyncSession = Depends(get_session_without_commit)) -> List[OrderBaseSchema]:
-    return await OrdersDAO(session).find_all()
+    return await OrdersDAO(session).get_all()
 
 
 @router.post('')
 async def create_order(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session_with_commit),
-):
+) -> OrderBaseSchema:
     return await OrdersDAO(session).add(user_id=user.id)

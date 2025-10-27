@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload
 from src.dao.base_dao import BaseDAO
 from src.purchase.cart.models import Cart, CartItem
 from src.purchase.cart.schemas import CartItemBase, CartUserIdSchema
-from src.purchase.exceptions import ItemInCartNotFound
+from src.purchase.exceptions import ItemInCartNotFoundException
 
 logger = loguru.logger
 
@@ -71,7 +71,7 @@ class CartsDAO(BaseDAO):
                 await cart_items_dao.update(id=cart_item.id, values=CartItemBase(quantity=new_quantity))
             await self._session.commit()
         else:
-            raise ItemInCartNotFound
+            raise ItemInCartNotFoundException
 
         await self._session.refresh(cart)
         return cart

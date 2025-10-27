@@ -16,7 +16,6 @@ class OrderItem(BaseModel):
     quantity: int
     product_id: int = None
     product: ProductBaseModelSchema = Field()
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -26,7 +25,5 @@ class OrderBaseSchema(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
-
-    # items: List[OrderItem] = []
-
+    items: List[OrderItem] = []
     model_config = ConfigDict(from_attributes=True)

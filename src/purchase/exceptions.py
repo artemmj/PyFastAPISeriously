@@ -13,7 +13,13 @@ ProductNotFoundException = HTTPException(
 )
 
 
-ItemInCartNotFound = HTTPException(
+ItemInCartNotFoundException = HTTPException(
     status_code=status.HTTP_404_NOT_FOUND,
     detail='Такой товар в корзине не найден',
+)
+
+
+CartEmptyException = HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail='Корзина пуста, невозможно оформить заказ'
 )
