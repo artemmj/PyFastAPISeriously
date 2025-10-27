@@ -1,7 +1,8 @@
 import loguru
 
 from fastapi import Query
-from sqlalchemy import asc, desc, select
+from pydantic import BaseModel
+from sqlalchemy import asc, desc, select, update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -10,6 +11,7 @@ from src.auth.exceptions import UserAlreadyExistsException
 from src.auth.models import Role, User
 from src.dao.base_dao import BaseDAO
 from src.purchase.cart.models import Cart, CartItem
+from src.purchase.order.models import Order, OrderItem
 
 logger = loguru.logger
 
@@ -60,6 +62,16 @@ class UsersDAO(BaseDAO):
                 # raise HTTPException(status_code=422, detail=f"Поле сортировки '{sort_field_name}' не найдено.")
                 pass # Продолжаем с сортировкой по умолчанию, если поле не найдено
 
+        query = query.options(
+            selectinload(User.cart)
+            .selectinload(Cart.items)
+            .selectinload(CartItem.product)
+        ).options(
+            selectinload(User.orders)
+            .selectinload(Order.items)
+            .selectinload(OrderItem.product)
+        )
+
         try:
             result = await self._session.execute(query)
         except SQLAlchemyError as e:
@@ -68,7 +80,7 @@ class UsersDAO(BaseDAO):
         records = result.scalars().all()
         return records
 
-    async def get_user_with_cart(self, user_id: int):
+    async def get_user_with_cart(self, user_id: int) -> User:
         """Получить пользователя с развернутой корзиной."""
         stmt = (
             select(User)
@@ -81,14 +93,26 @@ class UsersDAO(BaseDAO):
         )
         # Выполняем запрос
         result = await self._session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def update(self, id: int, values: BaseModel) -> User:
+        values_dict = values.model_dump(exclude_unset=True)
+        query = (
+            update(self.model)
+            .filter_by(id=id)
+            .values(**values_dict)
+            .execution_options(synchronize_session="fetch")
+        )
+        await self._session.execute(query)
+        await self._session.flush()
+        return await self.get_user_with_cart(user_id=id)
+
+    async def delete(self, user_id: int):
+        stmt = select(User).where(User.id == user_id)
+        result = await self._session.execute(stmt)
         user = result.scalar_one_or_none()
-
-        # Pydantic автоматически сериализует user в JSON,
-        # включая подгруженные cart, items и product,
-        # благодаря from_attributes=True и структуре схем.
-        # Важно, чтобы схема User содержала поле cart: Optional[schemas.CartSchema]
-
-        return user # Это ORM объект User, но FastAPI знает, как его сериализовать
+        await self._session.delete(user)
+        return
 
 
 class RolesDAO(BaseDAO):

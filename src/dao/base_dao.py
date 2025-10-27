@@ -1,10 +1,9 @@
 from typing import List, TypeVar, Generic, Type
 
 from pydantic import BaseModel
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete, func
 
 from src.dao.base_model import Base
 

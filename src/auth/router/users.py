@@ -22,12 +22,17 @@ router = APIRouter()
 logger = loguru.logger
 
 
-@router.get('/about')
-async def get_about(
+@router.get('/about_me')
+async def get_about_me(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session_without_commit),
 ) -> UserModelInfoSchema:
     return await UsersDAO(session).get_user_with_cart(user.id)
+
+
+@router.get("/roles")
+async def get_all_roles(session: AsyncSession = Depends(get_session_without_commit)) -> List[RoleModelSchema]:
+    return await RolesDAO(session).find_all()
 
 
 @router.get('')
@@ -47,7 +52,7 @@ async def get_user_by_id(
     id: int,
     session: AsyncSession = Depends(get_session_without_commit),
 ) -> UserModelInfoSchema:
-    instance = await UsersDAO(session).get_one_by_id(id=id)
+    instance = await UsersDAO(session).get_user_with_cart(user_id=id)
     if not instance:
         raise UserNotFoundException
     return instance
@@ -70,14 +75,9 @@ async def update_user(
 async def delete_user(
     id: int,
     session: AsyncSession = Depends(get_session_with_commit),
-) -> int:
+) -> None:
     dao = UsersDAO(session)
     del_user = await dao.get_one_by_id(id=id)
     if not del_user:
         raise UserNotFoundException
-    return await dao.delete(id=id)
-
-
-@router.get("/roles")
-async def get_all_roles(session: AsyncSession = Depends(get_session_without_commit)) -> List[RoleModelSchema]:
-    return await RolesDAO(session).find_all()
+    return await dao.delete(user_id=id)

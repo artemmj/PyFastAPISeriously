@@ -17,8 +17,8 @@ logger = loguru.logger
 
 
 @router.get('')
-async def get_all_carts(session: AsyncSession = Depends(get_session_without_commit)) -> List[CartSchema]:
-    return await CartsDAO(session).find_all()
+async def get_all_carts(session: AsyncSession = Depends(get_session_without_commit)):
+    return await CartsDAO(session).get_all()
 
 
 @router.post('')

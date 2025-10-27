@@ -10,7 +10,8 @@ from src.settings import settings
 from src.dao.base_model import Base
 from src.auth.models import User, Role
 from src.purchase.products.models import Product
-from src.purchase.cart.models import CartSchema
+from src.purchase.cart.models import Cart
+from src.purchase.order.models import Order, OrderItem
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.db_url)

@@ -1,3 +1,4 @@
+from typing import List
 from sqlalchemy import text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -27,6 +28,13 @@ class User(Base):
     # uselist=False означает один к одному
     # cascade="all, delete-orphan" означает, что корзина удаляется вместе с пользователем
     cart: Mapped["Cart"] = relationship("Cart", back_populates="user", uselist=False, cascade="all, delete-orphan")
+
+    orders: Mapped[List["Order"]] = relationship(
+        "Order",
+        back_populates='user',
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(id={self.id})"

@@ -13,6 +13,15 @@ logger = loguru.logger
 class CartsDAO(BaseDAO):
     model = Cart
 
+    async def get_all(self):
+        """Получить все корзины с товарами."""
+        stmt = (
+            select(Cart)
+            .options(selectinload(Cart.items).selectinload(CartItem.product))
+        )
+        result = await self._session.execute(stmt)
+        return result.scalars().all()
+
     async def get_user_cart(self, user_id: int):
         """Получить корзину пользователя детально с товарами."""
         stmt = (

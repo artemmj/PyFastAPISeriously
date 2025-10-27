@@ -12,14 +12,20 @@ class Product(Base):
     description: Mapped[str]
 
     # Связь с CartItem (один ко многим)
-    cart_items: Mapped[List["CartItem"]] = relationship(
-        "CartItem",
-        back_populates="product",
-        cascade="all, delete-orphan",
+    cart_items: Mapped[List['CartItem']] = relationship(
+        'CartItem',
+        back_populates='product',
+        cascade='all, delete-orphan',
+    )
+    # Связь с OrderItem (один ко многим)
+    orders: Mapped[List['OrderItem']] = relationship(
+        'OrderItem',
+        back_populates='product',
+        cascade='all, delete-orphan',
     )
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(id={self.id})"
+        return f'{self.__class__.__name__}(id={self.id})'
 
     def to_dict(self) -> dict:
         return {

@@ -9,6 +9,7 @@ from src.auth.router.auth import router as auth_router
 from src.auth.router.users import router as users_router
 from src.purchase.products.router import router as products_router
 from src.purchase.cart.router import router as carts_router
+from src.purchase.order.router import router as orders_router
 
 logger = loguru.logger
 
@@ -25,8 +26,8 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(auth_router, prefix='/auth', tags=["Авторизация и аутентификация"])
     app.include_router(users_router, prefix='/users', tags=["Пользователи"])
     app.include_router(products_router, prefix='/products', tags=["Товары"])
-
     app.include_router(carts_router, prefix='/carts', tags=["Корзины товаров"])
+    app.include_router(orders_router, prefix='/orders', tags=["Заказы"])
 
 
 def create_app() -> FastAPI:
