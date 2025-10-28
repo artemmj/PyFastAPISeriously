@@ -1,9 +1,12 @@
 import loguru
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from src.auth.router.auth import router as auth_router
 from src.auth.router.users import router as users_router
@@ -23,11 +26,28 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[dict, None]:
 
 
 def register_routers(app: FastAPI) -> None:
-    app.include_router(auth_router, prefix='/auth', tags=["Авторизация и аутентификация"])
-    app.include_router(users_router, prefix='/users', tags=["Пользователи"])
-    app.include_router(products_router, prefix='/products', tags=["Товары"])
-    app.include_router(carts_router, prefix='/carts', tags=["Корзины товаров"])
-    app.include_router(orders_router, prefix='/orders', tags=["Заказы"])
+    app.include_router(auth_router, prefix='/api/auth', tags=["Авторизация и аутентификация"])
+    app.include_router(users_router, prefix='/api/users', tags=["Пользователи"])
+    app.include_router(products_router, prefix='/api/products', tags=["Товары"])
+    app.include_router(carts_router, prefix='/api/carts', tags=["Корзины товаров"])
+    app.include_router(orders_router, prefix='/api/orders', tags=["Заказы"])
+
+
+def add_middlewares(app: FastAPI) -> None:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins='*',  # допущенные к API домены
+        allow_credentials=True,  # позволяет передавать куки
+        allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"],
+        allow_headers=[  # HTTP-заголовки
+            'access_token',
+            "Content-Type",
+            "Set-Cookie",
+            "Access-Control-Allow-Headers",
+            "Access-Control-Allow-Origin",
+            "Authorization",
+        ],
+    )
 
 
 def create_app() -> FastAPI:
@@ -39,7 +59,9 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         default_response_class=ORJSONResponse,
     )
+    app.mount("/static", StaticFiles(directory="static"), name="static")
     register_routers(app)
+    add_middlewares(app)
     return app
 
 

@@ -10,6 +10,7 @@ from src.auth.filters import UserFilter
 from src.auth.exceptions import UserAlreadyExistsException
 from src.auth.models import Role, User
 from src.dao.base_dao import BaseDAO
+from src.purchase.cart.dao import CartsDAO
 from src.purchase.cart.models import Cart, CartItem
 from src.purchase.order.models import Order, OrderItem
 
@@ -26,6 +27,14 @@ class UsersDAO(BaseDAO):
         )
         if query_result.scalar_one_or_none():
             raise UserAlreadyExistsException
+
+    async def add(self, **kwargs):
+        """Создает юзера, сразу с корзиной."""
+        new_instance = self.model(**kwargs)
+        self._session.add(new_instance)
+        await self._session.flush()
+        await CartsDAO(self._session).add(user_id=new_instance.id)
+        return new_instance
 
     async def find_all(self, filters: UserFilter, sorting: Query = None):
         """Находит всех юзеров, по фильтрам и с сортировкой."""

@@ -1,6 +1,7 @@
 from typing import List
 
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from src.dao.base_model import Base
 
@@ -10,6 +11,7 @@ class Product(Base):
     article: Mapped[str]
     price: Mapped[float]
     description: Mapped[str]
+    image_url: Mapped[str] = mapped_column(String, default=None, nullable=True)
 
     # Связь с CartItem (один ко многим)
     cart_items: Mapped[List['CartItem']] = relationship(

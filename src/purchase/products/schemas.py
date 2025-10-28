@@ -9,6 +9,7 @@ class ProductBaseModelSchema(BaseModel):
     article: str = Field(description='Артикул товара')
     price: float = Field(description='Цена товара')
     description: str = Field(description='Описание товара')
+    image_url: Optional[str] = Field(None, description="URL изображения товара")
 
     model_config = ConfigDict(from_attributes=True)
 
