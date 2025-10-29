@@ -28,7 +28,6 @@ const { addProduct } = useCart()
 const handleAddToCart = async () => {
     try {
         await addProduct(props.product.id)
-        // Можно показать уведомление, но пока — просто консоль
         alert('Товар добавлен в корзину')
     } catch (err) {
         alert('Ошибка: ' + err.message)

@@ -9,6 +9,7 @@ import ProfileView from '../views/ProfileView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import LoginView from '../views/LoginView.vue'
 import OrdersView from '../views/OrdersView.vue'
+import AboutView from '@/views/AboutView.vue'
 // import NotFoundView from '../views/NotFoundView.vue'
 
 // Определяем маршруты
@@ -20,6 +21,7 @@ const routes = [
     { path: '/auth/register', name: 'Register', component: RegisterView },
     { path: '/auth/login', name: 'Login', component: LoginView },
     { path: '/orders', name: 'Orders', component: OrdersView },
+    { path: '/about', name: 'About', component: AboutView },
     // 404 — должен быть последним
     // { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFoundView }
 ]
@@ -32,7 +34,7 @@ const router = createRouter({
 
 // Навигационный гард: защищаем приватные маршруты
 router.beforeEach((to, from, next) => {
-    const publicRoutes = ['/', '/catalog', '/auth/login', '/auth/register']
+    const publicRoutes = ['/', '/about', '/catalog', '/auth/login', '/auth/register']
     const isPublic = publicRoutes.includes(to.path)
     const isAuthenticated = !!localStorage.getItem('access_token')
 
