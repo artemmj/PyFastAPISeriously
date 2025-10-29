@@ -82,6 +82,10 @@ h1 {
   gap: 1.5rem;
 }
 
+.admin-links p {
+  text-align: left;
+}
+
 .admin-card {
   display: block;
   padding: 1.75rem;
@@ -101,12 +105,12 @@ h1 {
 .admin-card h3 {
   color: #2c3e50;
   margin-bottom: 0.5rem;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
 }
 
 .admin-card p {
   color: #7f8c8d;
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 </style>

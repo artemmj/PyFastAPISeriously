@@ -167,6 +167,7 @@ const newUser = ref({
   email: '',
   phone_number: '',
   password: '',
+  confirm_password: '',
   role_id: 3
 })
 
@@ -238,6 +239,7 @@ const resetUser = (userId) => {
 // Создать нового пользователя
 const handleCreate = async () => {
   try {
+    newUser.value.confirm_password = newUser.value.password  // TODO
     await createUser(newUser.value)
     // Сброс формы
     newUser.value = {

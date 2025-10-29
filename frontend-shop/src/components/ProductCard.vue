@@ -11,13 +11,20 @@
             <h3 class="product-name">{{ product.title }}</h3>
             <p>{{ product.description }}</p>
             <p class="product-price">{{ product.price }} ₽</p>
-            <button class="btn btn-outline" @click="handleAddToCart">В корзину</button>
+            <div v-if="isAuthenticated">
+              <button class="btn btn-outline" @click="handleAddToCart">В корзину</button>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useCart } from '@/composables/useCart'
+import { useAuth } from '@/composables/useAuth'
+
+const { accessToken } = useAuth()
+const isAuthenticated = computed(() => !!accessToken.value)
 
 const props = defineProps({
     product: { type: Object, required: true }
