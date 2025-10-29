@@ -49,6 +49,7 @@ class User(Base):
 
     def to_dict(self) -> dict:
         return {
+            'id': self.id,
             'phone_number': self.phone_number,
             'first_name': self.first_name,
             'last_name': self.last_name,

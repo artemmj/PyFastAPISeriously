@@ -9,6 +9,3 @@ class UserFilter(BaseModel):
     last_name: Optional[str] = Field(None, description="Фильтр по имени (частичное совпадение)")
     email: Optional[str] = Field(None, description="Фильтр по email (точное совпадение)")
     phone: Optional[str] = Field(None, description="Фильтр по phone (точное совпадение)")
-
-    class Config:
-        extra = "forbid"  # запрещает передачу дополнительных полей

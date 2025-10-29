@@ -38,7 +38,7 @@ async def get_all_roles(
 
 @router.get('')
 async def get_all_users(
-    admin_user: User = Depends(get_current_admin_user),
+    # admin_user: User = Depends(get_current_admin_user),
     filters: UserFilter = Depends(),
     sorting: Optional[str] = Query(
         "id:asc", # Значение по умолчанию
