@@ -14,8 +14,6 @@ export const apiFetch = async (url, options = {}) => {
 
     // Добавляем токен, если он есть
     if (token) {
-        // headers['Authorization'] = `Bearer ${token}`
-        // ИЛИ, как ты просил: в поле access_token
         headers['access_token'] = token
     }
 
@@ -30,7 +28,7 @@ export const apiFetch = async (url, options = {}) => {
     if (response.status === 401) {
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
-        // Перенаправить на логин? (требует доступа к router — лучше в компоненте)
+        // Перенаправить на логин требует доступа к router — лучше в компоненте
     }
 
     return response

@@ -39,11 +39,11 @@ const { products, loading, error, fetchProducts } = useProducts()
 
 // Загружаем товары при входе на страницу
 const loadProducts = () => {
-  fetchProducts()
+    fetchProducts()
 }
 
 onMounted(() => {
-  loadProducts()
+    loadProducts()
 })
 </script>
 

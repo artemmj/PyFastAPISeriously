@@ -16,7 +16,7 @@
                 <div class="auth-buttons">
                     <template v-if="isAuthenticated">
                         <router-link to="/profile" class="btn btn-text">ЛК</router-link>
-                        <router-link to="/orders" class="btn btn-text">Заказы</router-link>
+                        <!-- <router-link to="/orders" class="btn btn-text">Заказы</router-link> -->
                         <button @click="handleLogout" class="btn btn-text">Выйти</button>
                     </template>
                     <template v-else>
@@ -41,24 +41,11 @@ const router = useRouter()
 // Проверяем, авторизован ли пользователь
 const isAuthenticated = computed(() => !!accessToken.value)
 
-// Простой способ получить email из токена (если он там есть)
-// ⚠️ В реальном проекте лучше хранить профиль отдельно, но пока — заглушка
-const userEmail = computed(() => {
-  if (!accessToken.value) return ''
-  try {
-    // Декодируем payload JWT (без проверки подписи — только для UI)
-    const payload = JSON.parse(atob(accessToken.value.split('.')[1]))
-    return payload.email || 'Пользователь'
-  } catch (e) {
-    return 'Пользователь'
-  }
-})
-
 // Обработчик выхода
 const handleLogout = () => {
-  logout()
-  // Перенаправляем на главную
-  router.push('/')
+    logout()
+    // Перенаправляем на главную
+    router.push('/')
 }
 </script>
 

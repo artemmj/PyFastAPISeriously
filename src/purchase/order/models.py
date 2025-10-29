@@ -6,11 +6,11 @@ from src.dao.base_model import Base
 
 
 class OrderStatus(Enum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    SHIPPED = "shipped"
-    DELIVERED = "delivered"
-    CANCELLED = "cancelled"
+    PENDING = "На рассмотрении"
+    PROCESSING = "В обработке"
+    SHIPPED = "Отправлен"
+    DELIVERED = "Доставлен"
+    CANCELLED = "Завершен"
 
 
 class Order(Base):

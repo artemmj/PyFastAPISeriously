@@ -1,10 +1,12 @@
 <template>
     <div class="home">
-        <!-- Hero Section -->
         <section class="hero">
             <h1>Добро пожаловать в ShopVue.js!</h1>
             <p>Классные несуществующие товары для всех и каждого — от ничего до всего.</p>
             <router-link to="/catalog" class="btn btn-primary">Смотреть каталог</router-link>
+        </section>
+        <section class="hero">
+            <p>Заходите приобретайте. Базару нет.</p>
         </section>
     </div>
 </template>

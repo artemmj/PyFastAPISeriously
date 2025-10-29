@@ -8,10 +8,10 @@ export function useOrders() {
     const error = ref(null)
     const creating = ref(false)
 
-    // Получить список заказов
     const fetchOrders = async () => {
         loading.value = true
         error.value = null
+
         try {
             const response = await apiFetch('/api/orders/my')
             if (!response.ok) throw new Error('Не удалось загрузить заказы')
@@ -23,10 +23,10 @@ export function useOrders() {
         }
     }
 
-    // Создать заказ (на основе текущей корзины)
     const createOrder = async () => {
         creating.value = true
         error.value = null
+
         try {
             const response = await apiFetch('/api/orders', {
                 method: 'POST'

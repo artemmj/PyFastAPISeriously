@@ -29,7 +29,7 @@ const handleAddToCart = async () => {
     try {
         await addProduct(props.product.id)
         // Можно показать уведомление, но пока — просто консоль
-        console.log('Товар добавлен в корзину')
+        alert('Товар добавлен в корзину')
     } catch (err) {
         alert('Ошибка: ' + err.message)
     }
@@ -37,7 +37,6 @@ const handleAddToCart = async () => {
 </script>
 
 <style scoped>
-/* Стили карточки — такие же, как на главной, но вынесены в компонент */
 .product-card {
   background: white;
   border-radius: 12px;

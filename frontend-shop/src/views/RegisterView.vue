@@ -49,10 +49,8 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useAuth } from '@/composables/useAuth'
-import { useRouter } from 'vue-router'
 
 const { register } = useAuth()
-const router = useRouter()
 
 const form = reactive({
     email: '',

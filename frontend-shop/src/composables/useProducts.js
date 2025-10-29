@@ -16,13 +16,10 @@ export function useProducts() {
         error.value = null
 
         try {
-            // ⚠️ Замени URL на твой реальный FastAPI эндпоинт
             const response = await apiFetch('/api/products')
-
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`)
             }
-
             const data = await response.json()
             products.value = Array.isArray(data) ? data : []
         } catch (err) {
@@ -32,12 +29,6 @@ export function useProducts() {
             loading.value = false
         }
     }
-
-    // Автоматически загружаем при монтировании (опционально)
-    // Но лучше вызывать явно в компоненте — гибче
-    // onMounted(() => {
-    //   fetchProducts()
-    // })
 
     return {
         products,

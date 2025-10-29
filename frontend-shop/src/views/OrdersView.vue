@@ -5,7 +5,7 @@
         <div v-if="loading" class="status-message">Загрузка заказов...</div>
         <div v-else-if="error" class="status-message error">{{ error }}</div>
         <div v-else-if="!orders.length" class="status-message">
-            У вас пока нет заказов
+            У вас пока не было заказов
         </div>
         <div v-else class="orders-list">
             <div v-for="order in orders" :key="order.id" class="order-card">
@@ -14,9 +14,10 @@
                     <span class="order-date">{{ formatDate(order.created_at) }}</span>
                 </div>
                 <div class="order-items">
+                    <span class="order-status" :class="order.status">{{ order.status }}</span>
                     <div v-for="item in order.items" :key="item.id" class="order-item">
                         <img
-                            :src="getFullImageUrl(item.product.image_url)"
+                            :src="item.product.image_url"
                             :alt="item.product.name"
                             class="order-item-image"
                         />
@@ -35,31 +36,24 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted } from 'vue'
 import { useOrders } from '@/composables/useOrders'
 
 const { orders, loading, error, fetchOrders } = useOrders()
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-
-const getFullImageUrl = (url) => {
-  if (!url) return ``
-  return url.startsWith('http') ? url : API_BASE_URL + url
-}
-
 const formatDate = (isoString) => {
-  const date = new Date(isoString)
-  return date.toLocaleDateString('ru-RU', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+    const date = new Date(isoString)
+    return date.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })
 }
 
 onMounted(() => {
-  fetchOrders()
+    fetchOrders()
 })
 </script>
 
@@ -114,6 +108,10 @@ onMounted(() => {
 
 .order-date {
   color: #7f8c8d;
+  font-size: 0.95rem;
+}
+
+.order-status {
   font-size: 0.95rem;
 }
 

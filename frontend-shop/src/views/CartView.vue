@@ -6,7 +6,7 @@
         <div v-else-if="error" class="status-message error">{{ error }}</div>
         <div v-else>
             <div v-if="!cart?.items?.length" class="cart-empty">
-                <p>Ваша корзина пуста</p>
+                <p>Моя корзина пуста</p>
                 <router-link to="/catalog" class="btn btn-primary">Выбрать товары</router-link>
             </div>
             <div v-else>

@@ -12,8 +12,7 @@ export function useProfile() {
         error.value = null
 
         try {
-            const response = await apiFetch('/api/users/about_me') // твой эндпоинт
-
+            const response = await apiFetch('/api/users/about_me')
             if (!response.ok) {
                 // Если 401 — токен недействителен
                 if (response.status === 401) {
@@ -25,7 +24,6 @@ export function useProfile() {
                 }
                 throw new Error(`Ошибка: ${response.status}`)
             }
-
             profile.value = await response.json()
         } catch (err) {
             console.error('Ошибка загрузки профиля:', err)
