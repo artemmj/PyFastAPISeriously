@@ -12,6 +12,18 @@
 
 <script setup>
 import TheHeader from '@/components/layout/TheHeader.vue'
+import { onMounted } from 'vue'
+import { useProfile } from '@/composables/useProfile'
+
+// Загружаем профиль один раз на всё приложение
+const { fetchProfile } = useProfile()
+
+onMounted(() => {
+    const token = localStorage.getItem('access_token')
+    if (token) {
+        fetchProfile()
+    }
+})
 </script>
 
 <style>

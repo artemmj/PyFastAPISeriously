@@ -1,5 +1,6 @@
 // composable для управления аутентификацией
 import { ref } from 'vue'
+import { useProfile } from '@/composables/useProfile'
 
 // Храним токены реактивно (можно использовать в шаблонах)
 const accessToken = ref(localStorage.getItem('access_token') || null)
@@ -57,6 +58,10 @@ const login = async (credentials) => {
 
     const tokens = await response.json()
     setTokens(tokens.access_token, tokens.refresh_token)
+
+    const { fetchProfile } = useProfile()
+    fetchProfile()
+
     return tokens
 }
 

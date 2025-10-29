@@ -35,7 +35,7 @@ class BaseDAO(Generic[T]):
 
     async def find_all(self, filters: BaseModel | None = None):
         filter_dict = filters.model_dump(exclude_unset=True) if filters else {}
-        query = select(self.model).filter_by(**filter_dict)
+        query = select(self.model).filter_by(**filter_dict).order_by(self.model.id)
         result = await self._session.execute(query)
         records = result.scalars().all()
         return records

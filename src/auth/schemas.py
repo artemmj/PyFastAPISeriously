@@ -1,7 +1,7 @@
 import re
 from typing import Optional, Self
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
 from src.auth.security import get_password_hash
 from src.purchase.cart.schemas import CartSchema

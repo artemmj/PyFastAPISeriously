@@ -30,7 +30,7 @@ export function useCart() {
                 method: 'POST'
             })
             if (!response.ok) throw new Error('Не удалось добавить товар')
-                // await fetchCart() // обновляем корзину
+                await fetchCart()
         } catch (err) {
             error.value = err.message
             throw err
@@ -44,7 +44,7 @@ export function useCart() {
                 method: 'POST'
             })
             if (!response.ok) throw new Error('Не удалось удалить товар')
-            // await fetchCart() // обновляем корзину
+            await fetchCart()
         } catch (err) {
             error.value = err.message
             throw err
@@ -58,7 +58,7 @@ export function useCart() {
                 method: 'POST'
             })
             if (!response.ok) throw new Error('Не удалось очистить корзину')
-            // await fetchCart()
+            await fetchCart()
         } catch (err) {
             error.value = err.message
             throw err

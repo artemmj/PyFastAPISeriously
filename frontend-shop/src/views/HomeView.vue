@@ -4,7 +4,7 @@
         <section class="hero">
             <div class="hero-content">
                 <h1 class="hero-title">Ваш стиль — ваш выбор.</h1>
-                <h1 class="hero-title">Стиль - это все.</h1>
+                <h1 class="hero-title">Стиль — это все.</h1>
                 <p class="hero-subtitle">
                     Немного несуществующих товаров для несуществующих клиентов - все, чтобы вам было удобно.
                 </p>
@@ -53,7 +53,7 @@
                 </div>
                 <div class="products-grid">
                     <ProductCard
-                        v-for="product in products"
+                        v-for="product in products.slice(0, 2)"
                         :key="product.id"
                         :product="product"
                     />

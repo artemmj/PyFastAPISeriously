@@ -15,8 +15,8 @@
                 <!-- Кнопки аутентификации -->
                 <div class="auth-buttons">
                     <template v-if="isAuthenticated">
+                        <router-link v-if="isAdmin" to="/admin" class="btn btn-text">Админка</router-link>
                         <router-link to="/profile" class="btn btn-text">ЛК</router-link>
-                        <!-- <router-link to="/orders" class="btn btn-text">Заказы</router-link> -->
                         <button @click="handleLogout" class="btn btn-text">Выйти</button>
                     </template>
                     <template v-else>
@@ -34,8 +34,10 @@
 import { computed } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { useRouter } from 'vue-router'
+import { useProfile } from '@/composables/useProfile'
 
 const { accessToken, logout } = useAuth()
+const { isAdmin } = useProfile() // ← реактивное свойство
 const router = useRouter()
 
 // Проверяем, авторизован ли пользователь
@@ -44,7 +46,6 @@ const isAuthenticated = computed(() => !!accessToken.value)
 // Обработчик выхода
 const handleLogout = () => {
     logout()
-    // Перенаправляем на главную
     router.push('/')
 }
 </script>
