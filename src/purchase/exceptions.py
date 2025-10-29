@@ -23,3 +23,15 @@ CartEmptyException = HTTPException(
     status_code=status.HTTP_400_BAD_REQUEST,
     detail='Корзина пуста, невозможно оформить заказ'
 )
+
+
+IncorrectFileContentTypeException = HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail='Файл должен быть изображением (.jpeg, .png или .gif)'
+)
+
+
+FileSaveFailedException = HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail='Ошибка при сохранении файла'
+)

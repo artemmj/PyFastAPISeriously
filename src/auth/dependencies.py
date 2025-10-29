@@ -4,7 +4,7 @@ from jose import jwt, JWTError, ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.dao import UsersDAO
-from src.auth.models import User
+from src.auth.models import User, RolesEnum
 from src.settings import settings
 from src.dao.database import get_session_without_commit
 from src.auth.exceptions import (
@@ -78,6 +78,6 @@ async def get_current_user(
 
 async def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
     """Проверяем права пользователя как администратора."""
-    if current_user.role.name == 'admin':
+    if current_user.role.name.value == RolesEnum.ADMIN.value:
         return current_user
     raise ForbiddenException

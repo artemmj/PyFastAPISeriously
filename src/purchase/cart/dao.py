@@ -17,6 +17,7 @@ class CartsDAO(BaseDAO):
         """Получить все корзины с товарами."""
         stmt = (
             select(Cart)
+            .order_by(self.model.id)
             .options(selectinload(Cart.items).selectinload(CartItem.product))
         )
         result = await self._session.execute(stmt)
@@ -88,7 +89,7 @@ class CartItemsDAO(BaseDAO):
     model = CartItem
 
     async def get_by_cart_and_product(self, cart_id: int, product_id: int) -> CartItem:
-        query = select(self.model).filter_by(cart_id=cart_id, product_id=product_id)
+        query = select(self.model).filter_by(cart_id=cart_id, product_id=product_id).order_by(self.model.id)
         result = await self._session.execute(query)
         record = result.scalar_one_or_none()
         return record

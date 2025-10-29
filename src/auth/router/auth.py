@@ -19,6 +19,20 @@ router = APIRouter()
 logger = loguru.logger
 
 
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register_user(
+    user_data: UserModelRegisterSchema,
+    session: AsyncSession = Depends(get_session_with_commit),
+) -> UserModelInfoSchema:
+    dao = UsersDAO(session)
+    user_data_dict = user_data.model_dump()
+    await dao.check_unique_user(user_data_dict.get('phone_number'), user_data_dict.get('email'))
+    user_data_dict.pop('confirm_password', None)
+    new_user = await dao.add(**user_data_dict)
+    await session.refresh(new_user)
+    return JSONResponse(new_user.to_dict(), status_code=status.HTTP_201_CREATED)
+
+
 @router.post("/login")
 async def login_user(
     response: Response,
@@ -36,17 +50,3 @@ async def login_user(
         'access_token': atoken,
         'refresh_token': rtoken,
     }
-
-
-@router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register_user(
-    user_data: UserModelRegisterSchema,
-    session: AsyncSession = Depends(get_session_with_commit),
-) -> UserModelInfoSchema:
-    dao = UsersDAO(session)
-    user_data_dict = user_data.model_dump()
-    await dao.check_unique_user(user_data_dict.get('phone_number'), user_data_dict.get('email'))
-    user_data_dict.pop('confirm_password', None)
-    new_user = await dao.add(**user_data_dict)
-    await session.refresh(new_user)
-    return JSONResponse(new_user.to_dict(), status_code=status.HTTP_201_CREATED)

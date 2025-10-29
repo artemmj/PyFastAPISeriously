@@ -1,8 +1,8 @@
 """Initial
 
-Revision ID: dd058e4db969
+Revision ID: e6bc93add009
 Revises: 
-Create Date: 2025-10-27 11:36:07.659086
+Create Date: 2025-10-29 10:02:17.731776
 
 """
 from typing import Sequence, Union
@@ -10,9 +10,11 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
+from src.auth.models import RolesEnum
+
 
 # revision identifiers, used by Alembic.
-revision: str = 'dd058e4db969'
+revision: str = 'e6bc93add009'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,18 +29,25 @@ def upgrade() -> None:
         sa.Column('article', sa.String(), nullable=False),
         sa.Column('price', sa.Float(), nullable=False),
         sa.Column('description', sa.String(), nullable=False),
+        sa.Column('image_url', sa.String(), nullable=True),
         sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=False),
         sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('roles',
+    roles_table = op.create_table('roles',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('name', sa.String(), nullable=False),
+        sa.Column('name', sa.Enum('ADMIN', 'MODERATOR', 'USER', name='rolesenum'), nullable=False),
         sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=False),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name')
+        sa.PrimaryKeyConstraint('id')
     )
+
+    op.bulk_insert(roles_table, [
+        {'id': 1, 'name': RolesEnum.ADMIN.value.upper()},
+        {'id': 2, 'name': RolesEnum.MODERATOR.value.upper()},
+        {'id': 3, 'name': RolesEnum.USER.value.upper()},
+    ])
+
     op.create_table('users',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('phone_number', sa.String(), nullable=False),
@@ -46,7 +55,7 @@ def upgrade() -> None:
         sa.Column('last_name', sa.String(), nullable=False),
         sa.Column('email', sa.String(), nullable=False),
         sa.Column('password', sa.String(), nullable=False),
-        sa.Column('role_id', sa.Integer(), server_default=sa.text('1'), nullable=False),
+        sa.Column('role_id', sa.Integer(), server_default=sa.text('3'), nullable=False),
         sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=False),
         sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
@@ -54,6 +63,8 @@ def upgrade() -> None:
         sa.UniqueConstraint('email'),
         sa.UniqueConstraint('phone_number')
     )
+    op.create_foreign_key('fk_users_role_id_roles', 'users', 'roles', ['role_id'], ['id'])
+
     op.create_table('carts',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=False),

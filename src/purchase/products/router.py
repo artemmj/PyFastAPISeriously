@@ -6,9 +6,11 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.dependencies import get_current_user, get_current_admin_user
+from src.auth.models import User
 from src.dao.database import get_session_without_commit, get_session_with_commit
 from src.purchase.products.dao import ProductsDAO
-from src.purchase.exceptions import ProductNotFoundException
+from src.purchase.exceptions import FileSaveFailedException, IncorrectFileContentTypeException, ProductNotFoundException
 from src.purchase.products.schemas import ProductBaseModelSchema, ProductCreateUpdateModelSchema
 from src.purchase.products.models import Product
 
@@ -17,13 +19,17 @@ logger = loguru.logger
 
 
 @router.get('')
-async def get_all_products(session: AsyncSession = Depends(get_session_without_commit)) -> List[ProductBaseModelSchema]:
+async def get_all_products(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session_without_commit),
+) -> List[ProductBaseModelSchema]:
     return await ProductsDAO(session).find_all()
 
 
 @router.post('')
 async def create_product(
     product_data: ProductCreateUpdateModelSchema,
+    admin_user: User = Depends(get_current_admin_user),
     session: AsyncSession = Depends(get_session_with_commit),
 ) -> ProductBaseModelSchema:
     new_product = await ProductsDAO(session).add(**product_data.model_dump(exclude_unset=True))
@@ -35,6 +41,7 @@ async def create_product(
 async def update_product(
     id: int,
     new_product_data: ProductCreateUpdateModelSchema,
+    admin_user: User = Depends(get_current_admin_user),
     session: AsyncSession = Depends(get_session_with_commit),
 ) -> ProductBaseModelSchema:
     dao = ProductsDAO(session)
@@ -47,6 +54,7 @@ async def update_product(
 @router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_product(
     id: int,
+    admin_user: User = Depends(get_current_admin_user),
     session: AsyncSession = Depends(get_session_with_commit),
 ) -> None:
     dao = ProductsDAO(session)
@@ -56,10 +64,11 @@ async def delete_product(
     return await dao.delete(id=id)
 
 
-@router.post("/{id}/upload_image/")
+@router.post("/{id}/upload_image")
 async def upload_product_image(  # TODO REFACTOR
     id: int, # ID продукта из пути
     file: UploadFile = File(...),
+    admin_user: User = Depends(get_current_admin_user),
     session: AsyncSession = Depends(get_session_with_commit),
 ):
     # Папка для сохранения файлов внутри static
@@ -77,8 +86,7 @@ async def upload_product_image(  # TODO REFACTOR
     # 2. Проверить тип файла
     allowed_types = {"image/jpeg", "image/jpg", "image/png", "image/gif"}
     if file.content_type not in allowed_types:
-        raise ValueError("Файл должен быть изображением (jpeg, png, gif)")
-        # HTTPException(status_code=400, detail="Файл должен быть изображением (jpeg, png, gif)")
+        raise IncorrectFileContentTypeException
 
     # 3. Сгенерировать уникальное имя файла
     import uuid
@@ -92,9 +100,7 @@ async def upload_product_image(  # TODO REFACTOR
         with open(file_path, "wb") as f:
             f.write(contents)
     except Exception as e:
-        print(f"Ошибка при сохранении файла: {e}")
-        raise
-        # raise HTTPException(status_code=500, detail="Ошибка при сохранении файла")
+        raise FileSaveFailedException
 
     # 5. Обновить поле image_url в БД
     # URL будет вида /static/uploads/{filename}

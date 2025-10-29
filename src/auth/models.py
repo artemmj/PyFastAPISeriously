@@ -1,13 +1,21 @@
+from enum import Enum
 from typing import List
-from sqlalchemy import text, ForeignKey
+
+from sqlalchemy import text, ForeignKey, Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.dao.base_model import Base, str_uniq
 from src.purchase.cart.models import Cart
 
 
+class RolesEnum(Enum):
+    ADMIN = "admin"
+    MODERATOR = "moderator"
+    USER = "user"
+
+
 class Role(Base):
-    name: Mapped[str_uniq]
+    name: Mapped[RolesEnum] = mapped_column(SqlEnum(RolesEnum), nullable=False, default=RolesEnum.USER)
     users: Mapped[list["User"]] = relationship(back_populates="role")
 
     def __repr__(self):
@@ -21,7 +29,7 @@ class User(Base):
     email: Mapped[str_uniq]
     password: Mapped[str]
 
-    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'), default=1, server_default=text("1"))
+    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'), default=3, server_default=text("3"))
     role: Mapped["Role"] = relationship("Role", back_populates="users", lazy="joined")
 
     # Связь "один к одному" с CartSchema
@@ -45,5 +53,5 @@ class User(Base):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'email': self.email,
-            'role_name': self.role.name,
+            'role_id': self.role.id,
         }
