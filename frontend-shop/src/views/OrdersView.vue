@@ -22,7 +22,7 @@
                         />
                         <div class="order-item-info">
                             <h4>{{ item.product.name }}</h4>
-                            <p>{{ item.product.price }} ₽ × {{ item.quantity }}</p>
+                            <p>{{ item.product.price }} ₽ × {{ item.quantity }} = {{ item.product.price *  item.quantity}}</p>
                         </div>
                     </div>
                 </div>

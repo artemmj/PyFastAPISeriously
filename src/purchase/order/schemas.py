@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from src.purchase.products.schemas import ProductBaseModelSchema
 
@@ -27,3 +27,11 @@ class OrderBaseSchema(BaseModel):
     updated_at: datetime
     items: List[OrderItem] = []
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    @property
+    def total_amount(self) -> float:
+        total = 0
+        for item in self.items:
+            total += item.quantity * item.product.price
+        return total

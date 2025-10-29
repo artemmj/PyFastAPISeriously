@@ -20,7 +20,7 @@ logger = loguru.logger
 
 @router.get('')
 async def get_all_products(
-    user: User = Depends(get_current_user),
+    # user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session_without_commit),
 ) -> List[ProductBaseModelSchema]:
     return await ProductsDAO(session).find_all()

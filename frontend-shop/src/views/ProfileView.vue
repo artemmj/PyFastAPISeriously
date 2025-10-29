@@ -1,63 +1,96 @@
 <template>
-    <div class="profile-page">
-        <h1>Личный кабинет</h1>
+  <div class="profile-page">
+    <h1>Личный кабинет</h1>
+  
+    <div v-if="loading" class="status-message">Загрузка...</div>
+  
+    <div v-else-if="error" class="status-message error">{{ error }}</div>
+  
+    <div v-else-if="profile" class="profile-card">
+      <!-- Профиль -->
+      <div class="profile-header">
+          <h2>{{ profile.first_name }} {{ profile.last_name }}</h2>
+          <p class="email">{{ profile.email }}</p>
+          <p v-if="profile.phone_number" class="phone">Телефон: {{ profile.phone_number }}</p>
+      </div>
 
-        <div v-if="loading" class="status-message">Загрузка...</div>
-        <div v-else-if="error" class="status-message error">{{ error }}</div>
-        <div v-else-if="profile" class="profile-card">
-        <!-- Профиль -->
-        <div class="profile-header">
-            <h2>{{ profile.first_name }} {{ profile.last_name }}</h2>
-            <p class="email">{{ profile.email }}</p>
-            <p v-if="profile.phone_number" class="phone">Телефон: {{ profile.phone_number }}</p>
+
+      <div class="cart-section">
+        <div class="cart-header">
+            <h3>Ваша корзина</h3>
+            <button v-if="cart?.items?.length" @click="clearCart" class="btn btn-text">
+                Очистить
+            </button>
         </div>
-
-        <!-- Корзина -->
-        <div class="cart-section">
-            <div class="cart-header">
-                <h3>Ваша корзина</h3>
-                <button v-if="cart?.items?.length" @click="clearCart" class="btn btn-text">
-                    Очистить
+        <div v-if="!cart?.items?.length" class="cart-empty">
+            Корзина пуста
+        </div>
+        <div v-else class="cart-items">
+          <div v-for="item in cart.items" :key="item.id" class="cart-item">
+            <img
+                :src="getFullImageUrl(item.product.image_url)"
+                :alt="item.product.title"
+                class="cart-item-image"
+            />
+            <div class="cart-item-info">
+                <h4>{{ item.product.title }}</h4>
+                <p class="price">{{ item.product.price }} ₽</p>
+                <p class="quantity">Кол-во: {{ item.quantity }}</p>
+            </div>
+            <div class="cart-item-actions">
+                <button @click="() => removeProduct(item.product.id)" class="btn btn-sm">
+                    –
+                </button>
+                <button @click="() => addProduct(item.product.id)" class="btn btn-sm">
+                    +
                 </button>
             </div>
-            <div v-if="!cart?.items?.length" class="cart-empty">
-                Корзина пуста
-            </div>
-            <div v-else class="cart-items">
-                <div v-for="item in cart.items" :key="item.id" class="cart-item">
-                    <img
-                        :src="getFullImageUrl(item.product.image_url)"
-                        :alt="item.product.title"
-                        class="cart-item-image"
-                    />
-                    <div class="cart-item-info">
-                        <h4>{{ item.product.title }}</h4>
-                        <p class="price">{{ item.product.price }} ₽</p>
-                        <p class="quantity">Кол-во: {{ item.quantity }}</p>
-                    </div>
-                    <div class="cart-item-actions">
-                        <button @click="() => removeProduct(item.product.id)" class="btn btn-sm">
-                            –
-                        </button>
-                        <button @click="() => addProduct(item.product.id)" class="btn btn-sm">
-                            +
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <router-link to="/cart" class="btn btn-outline cart-link">Подробнее</router-link>
+          </div>
         </div>
+        <router-link to="/cart" class="btn btn-outline cart-link">Подробнее</router-link>
+      </div>
+
+      <!-- === Заказы === -->
+      <div class="orders-section">
+        <div class="section-header">
+          <h3>Мои заказы</h3>
+          <router-link to="/orders" class="btn btn-text">Все заказы</router-link>
         </div>
+
+        <div v-if="!orders.length" class="orders-empty">
+          У вас пока нет заказов
+        </div>
+
+        <div v-else class="orders-list">
+          <div
+            v-for="order in orders"
+            :key="order.id"
+            class="order-item"
+          >
+            <div class="order-info">
+              <span class="order-id">Заказ #{{ order.id }} </span>
+              <span class="order-date">{{ formatDate(order.created_at) }}</span>
+            </div>
+            <div class="order-total">
+              Итого: {{ order.total_amount }} ₽
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
+  </div>
 </template>
 
 <script setup>
 import { onMounted, computed } from 'vue'
 import { useProfile } from '@/composables/useProfile'
 import { useCart } from '@/composables/useCart'
+import { useOrders } from '@/composables/useOrders'
 
 const { profile, loading, error, fetchProfile } = useProfile()
 const { cart, fetchCart, addProduct, removeProduct, clearCart } = useCart()
+const { orders, loading: loadingOrders, error: ordersError, fetchOrders } = useOrders()
 
 // Базовый URL для изображений
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -67,14 +100,35 @@ const getFullImageUrl = (url) => {
   return url.startsWith('http') ? url : API_BASE_URL + url
 }
 
+const formatDate = (isoString) => {
+  const date = new Date(isoString)
+  return date.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 onMounted(() => {
   fetchProfile()
   fetchCart()
+  fetchOrders()
 })
 </script>
 
 <style scoped>
-/* ... предыдущие стили ... */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: #2c3e50;
+}
 
 .cart-section {
   margin-top: 2rem;
@@ -162,5 +216,73 @@ onMounted(() => {
   display: block;
   text-align: center;
   margin-top: 1.5rem;
+}
+
+.orders-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.orders-empty {
+  text-align: center;
+  color: #7f8c8d;
+  padding: 1rem;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.order-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.order-id {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.order-date {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.order-total {
+  font-weight: bold;
+  color: #27ae60;
+}
+
+/* Кнопки */
+.btn-text {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 0.25rem;
+}
+
+.btn-text:hover {
+  color: #2980b9;
+  text-decoration: underline;
+}
+
+.btn-outline {
+  display: inline-block;
+  text-align: center;
+  margin-top: 1rem;
 }
 </style>

@@ -9,7 +9,7 @@
         />
         <div class="product-info">
             <h3 class="product-name">{{ product.title }}</h3>
-            <h3 class="product-name">{{ product.description }}</h3>
+            <p>{{ product.description }}</p>
             <p class="product-price">{{ product.price }} ₽</p>
             <button class="btn btn-outline" @click="handleAddToCart">В корзину</button>
         </div>
