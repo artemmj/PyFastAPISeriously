@@ -16,6 +16,7 @@
                         <th>ID</th>
                         <th>Изображение</th>
                         <th>Название</th>
+                        <th>Категория</th>
                         <th>Артикул</th>
                         <th>Цена (₽)</th>
                         <th>Действия</th>
@@ -33,6 +34,7 @@
                                 />
                             </td>
                             <td>{{ product.title }}</td>
+                            <td>{{ product.category?.title || '—' }}</td>
                             <td>{{ product.article }}</td>
                             <td>{{ product.price }} ₽</td>
                             <td class="actions">
@@ -60,11 +62,20 @@
                                 <input v-model="modalForm.title" type="text" required />
                             </div>
                             <div class="form-group">
-                                <label>Артикул</label>
-                                <input v-model="modalForm.article" type="text" required />
+                                <label>Категория</label>
+                                <select v-model.number="modalForm.category_id" required class="form-select">
+                                    <option value="">Выберите категорию</option>
+                                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                                        {{ cat.title }}
+                                    </option>
+                                </select>
                             </div>
                         </div>
                         <div class="form-row">
+                            <div class="form-group">
+                                <label>Артикул</label>
+                                <input v-model="modalForm.article" type="text" required />
+                            </div>
                             <div class="form-group">
                                 <label>Цена (₽)</label>
                                 <input v-model.number="modalForm.price" type="number" min="0" step="0.01" required />
@@ -107,6 +118,52 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Управление категориями -->
+            <div class="categories-section">
+                <div class="page-header">
+                    <h2>Категории товаров</h2>
+                    <button @click="openCategoryModal(null)" class="btn btn-primary">+ Добавить категорию</button>
+                </div>
+
+                <div v-if="categoriesLoading" class="status-message">Загрузка категорий...</div>
+                <div v-else-if="categories.length === 0" class="status-message">Нет категорий</div>
+                <div v-else class="categories-list">
+                    <div v-for="cat in categories" :key="cat.id" class="category-item">
+                        <span>{{ cat.title }}</span>
+                        <div class="category-actions">
+                            <button @click="openCategoryModal(cat)" class="btn btn-outline btn-sm">
+                                Редактировать
+                            </button>
+                            <button @click="() => deleteCategory(cat.id)" :disabled="saving" class="btn btn-danger btn-sm">
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модалка категории (создание/редактирование) -->
+            <div v-if="isCategoryModalOpen" class="modal-overlay" @click="closeCategoryModal">
+                <div class="modal" @click.stop>
+                    <div class="modal-header">
+                        <h3>{{ editingCategory ? 'Редактировать категорию' : 'Добавить категорию' }}</h3>
+                        <button @click="closeCategoryModal" class="modal-close">&times;</button>
+                    </div>
+                    <form @submit.prevent="handleCategorySubmit" class="modal-form">
+                        <div class="form-group">
+                            <label>Название категории</label>
+                            <input v-model="categoryForm.title" type="text" required />
+                        </div>
+                        <div class="modal-actions">
+                            <button type="submit" :disabled="saving" class="btn btn-primary">
+                            {{ saving ? 'Сохранение...' : (editingCategory ? 'Сохранить' : 'Создать') }}
+                            </button>
+                            <button @click="closeCategoryModal" type="button" class="btn btn-outline">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -124,14 +181,21 @@ const {
     createProduct,
     updateProduct,
     deleteProduct,
-    uploadImage
+    uploadImage,
+    categories,
+    categoriesLoading,
+    fetchCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory
 } = useAdminProducts()
 
-// Модалка
+// === Товары ===
 const isModalOpen = ref(false)
 const editingProduct = ref(null)
 const modalForm = ref({
     title: '',
+    category_id: null,
     article: '',
     price: 0,
     description: ''
@@ -142,6 +206,9 @@ const fileInput = ref(null)
 const imageFile = ref(null)
 const imagePreview = ref(null)
 const selectedFileName = ref('')
+
+// === Категории ===
+const newCategoryTitle = ref('')
 
 // URL для изображений
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -184,7 +251,7 @@ const resetFile = () => {
 // Открыть модалку создания
 const openCreateModal = () => {
     editingProduct.value = null
-    modalForm.value = { title: '', article: '', price: 0, description: '' }
+    modalForm.value = { title: '', category_id: null, article: '', price: 0, description: '' }
     resetFile()
     isModalOpen.value = true
 }
@@ -194,6 +261,7 @@ const openEditModal = (product) => {
     editingProduct.value = product
     modalForm.value = {
         title: product.title,
+        category_id: product.category?.id || null,
         article: product.article,
         price: product.price,
         description: product.description || ''
@@ -239,9 +307,43 @@ const handleSubmit = async () => {
     }
 }
 
+// === Категории ===
+const isCategoryModalOpen = ref(false)
+const editingCategory = ref(null) // null = создание, объект = редактирование
+const categoryForm = ref({ title: '' })
+
+// Открыть модалку категории (создание или редактирование)
+const openCategoryModal = (category) => {
+    editingCategory.value = category
+    categoryForm.value = {
+        title: category?.title || ''
+    }
+    isCategoryModalOpen.value = true
+}
+
+const closeCategoryModal = () => {
+    isCategoryModalOpen.value = false
+    editingCategory.value = null
+}
+
+// Отправка формы категории
+const handleCategorySubmit = async () => {
+    try {
+        if (editingCategory.value) {
+            await updateCategory(editingCategory.value.id, categoryForm.value)
+        } else {
+            await createCategory(categoryForm.value)
+        }
+        closeCategoryModal()
+    } catch (err) {
+        console.error('Ошибка:', err)
+    }
+}
+
 // Загрузка
 onMounted(() => {
     fetchProducts()
+    fetchCategories()
 })
 </script>
 
@@ -641,6 +743,33 @@ textarea {
   font-size: 0.85rem;
   color: #7f8c8d;
   margin: 0;
+}
+
+.categories-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #eee;
+}
+
+.categories-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.category-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 /* Адаптивность */

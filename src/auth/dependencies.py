@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.dao import UsersDAO
 from src.auth.models import User, RolesEnum
 from src.settings import settings
-from src.dao.database import get_session_without_commit
+from src.dao.database import get_session
 from src.auth.exceptions import (
     TokenNoFound, NoJwtException, TokenExpiredException, NoUserIdException, ForbiddenException, UserNotFoundException
 )
@@ -30,7 +30,7 @@ def get_refresh_token(request: Request) -> str:
 
 async def check_refresh_token(
     token: str = Depends(get_refresh_token),
-    session: AsyncSession = Depends(get_session_without_commit)
+    session: AsyncSession = Depends(get_session)
 ) -> User:
     """ Проверяем refresh_token и возвращаем пользователя."""
     try:
@@ -51,7 +51,7 @@ async def check_refresh_token(
 
 async def get_current_user(
     token: str = Depends(get_access_token),
-    session: AsyncSession = Depends(get_session_without_commit)
+    session: AsyncSession = Depends(get_session)
 ) -> User:
     """Проверяем access_token и возвращаем пользователя."""
     try:

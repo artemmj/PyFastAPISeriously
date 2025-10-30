@@ -47,7 +47,7 @@ class UserModelBaseSchema(BaseModel):
 
 class UserModelInfoSchema(UserModelBaseSchema):
     role_id: int = Field()
-    cart: CartSchema | None = Field()
+    cart: CartSchema = Field()
     model_config = ConfigDict(from_attributes=True)
 
 

@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from src.purchase.products.schemas import ProductBaseModelSchema
 
@@ -19,7 +19,7 @@ class CartItem(BaseModel):
     id: int
     quantity: int
     product_id: int = None
-    product: ProductBaseModelSchema = Field()
+    product: ProductBaseModelSchema
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -27,8 +27,8 @@ class CartItem(BaseModel):
 class CartSchema(BaseModel):
     id: int
     user_id: int
-    created_at: datetime
-    updated_at: datetime
+    # created_at: datetime
+    # updated_at: datetime
     items: List[CartItem] = []
 
     model_config = ConfigDict(from_attributes=True)

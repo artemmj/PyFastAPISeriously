@@ -6,6 +6,7 @@ from src.dao.base_dao import BaseDAO
 from src.purchase.cart.models import Cart, CartItem
 from src.purchase.cart.schemas import CartItemBase, CartUserIdSchema
 from src.purchase.exceptions import ItemInCartNotFoundException
+from src.purchase.products.models import Product
 
 logger = loguru.logger
 
@@ -18,7 +19,11 @@ class CartsDAO(BaseDAO):
         stmt = (
             select(Cart)
             .order_by(self.model.id)
-            .options(selectinload(Cart.items).selectinload(CartItem.product))
+            .options(
+                selectinload(Cart.items)
+                .selectinload(CartItem.product)
+                .selectinload(Product.category)
+            )
         )
         result = await self._session.execute(stmt)
         return result.scalars().all()
@@ -27,7 +32,11 @@ class CartsDAO(BaseDAO):
         """Получить корзину пользователя детально с товарами."""
         stmt = (
             select(Cart)
-            .options(selectinload(Cart.items).selectinload(CartItem.product))
+            .options(
+                selectinload(Cart.items)
+                .selectinload(CartItem.product)
+                .selectinload(Product.category)
+            )
             .where(Cart.user_id == user_id)
         )
         result = await self._session.execute(stmt)
@@ -82,6 +91,7 @@ class CartsDAO(BaseDAO):
         stmt = delete(CartItem).filter_by(cart_id=cart_id)
         await self._session.execute(stmt)
         await self._session.flush()
+        await self._session.commit()
         return await self.get_user_cart(user_id)
 
 

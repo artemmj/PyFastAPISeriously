@@ -30,7 +30,10 @@ class Base(AsyncAttrs, DeclarativeBase):
 
     @declared_attr
     def __tablename__(cls) -> str:
-        return cls.__name__.lower() + 's'
+        lname = cls.__name__.lower()
+        if lname[-1] == 'y':
+            return lname[:-1] + 'ies'
+        return lname + 's'
 
     def to_dict(self, exclude_none: bool = False):
         """Преобразует объект модели в словарь."""

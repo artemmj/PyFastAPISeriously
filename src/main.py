@@ -10,7 +10,8 @@ from fastapi.staticfiles import StaticFiles
 
 from src.auth.router.auth import router as auth_router
 from src.auth.router.users import router as users_router
-from src.purchase.products.router import router as products_router
+from src.purchase.products.router.products import router as products_router
+from src.purchase.products.router.product_category import router as product_category_router
 from src.purchase.cart.router import router as carts_router
 from src.purchase.order.router import router as orders_router
 
@@ -29,6 +30,7 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(auth_router, prefix='/api/auth', tags=["Авторизация и аутентификация"])
     app.include_router(users_router, prefix='/api/users', tags=["Пользователи"])
     app.include_router(products_router, prefix='/api/products', tags=["Товары"])
+    app.include_router(product_category_router, prefix='/api/products/categories', tags=["Категории товаров"])
     app.include_router(carts_router, prefix='/api/carts', tags=["Корзины товаров"])
     app.include_router(orders_router, prefix='/api/orders', tags=["Заказы"])
 

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.dependencies import get_current_user, get_current_admin_user
 from src.auth.models import User
-from src.dao.database import get_session_without_commit, get_session_with_commit
+from src.dao.database import get_session, get_session
 from src.purchase.products.dao import ProductsDAO
 from src.purchase.exceptions import FileSaveFailedException, IncorrectFileContentTypeException, ProductNotFoundException
 from src.purchase.products.schemas import ProductBaseModelSchema, ProductCreateUpdateModelSchema
@@ -21,7 +21,7 @@ logger = loguru.logger
 @router.get('')
 async def get_all_products(
     # user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session_without_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> List[ProductBaseModelSchema]:
     return await ProductsDAO(session).find_all()
 
@@ -30,7 +30,7 @@ async def get_all_products(
 async def create_product(
     product_data: ProductCreateUpdateModelSchema,
     admin_user: User = Depends(get_current_admin_user),
-    session: AsyncSession = Depends(get_session_with_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> ProductBaseModelSchema:
     new_product = await ProductsDAO(session).add(**product_data.model_dump(exclude_unset=True))
     return new_product
@@ -42,20 +42,22 @@ async def update_product(
     id: int,
     new_product_data: ProductCreateUpdateModelSchema,
     admin_user: User = Depends(get_current_admin_user),
-    session: AsyncSession = Depends(get_session_with_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> ProductBaseModelSchema:
     dao = ProductsDAO(session)
-    upd_user = await dao.get_one_by_id(id=id)
-    if not upd_user:
+    upd_prd = await dao.get_one_by_id(id=id)
+    if not upd_prd:
         raise ProductNotFoundException
-    return await dao.update(id=id, values=new_product_data)
+    await dao.update(id=id, values=new_product_data)
+    await session.refresh(upd_prd)
+    return upd_prd
 
 
 @router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_product(
     id: int,
     admin_user: User = Depends(get_current_admin_user),
-    session: AsyncSession = Depends(get_session_with_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> None:
     dao = ProductsDAO(session)
     upd_user = await dao.get_one_by_id(id=id)
@@ -69,7 +71,7 @@ async def upload_product_image(  # TODO REFACTOR
     id: int, # ID продукта из пути
     file: UploadFile = File(...),
     admin_user: User = Depends(get_current_admin_user),
-    session: AsyncSession = Depends(get_session_with_commit),
+    session: AsyncSession = Depends(get_session),
 ):
     # Папка для сохранения файлов внутри static
     UPLOADS_DIR_PATH = Path("static/uploads")
@@ -113,35 +115,3 @@ async def upload_product_image(  # TODO REFACTOR
         await session.commit()
         await session.refresh(product)
     return product
-
-    # if not updated_product:
-    #     # Это маловероятно, если мы только что проверили его существование, но на всякий случай
-    #     raise HTTPException(status_code=404, detail="Товар не найден после обновления")
-    return updated_product
-
-
-# --- Роут для обновления товара (включая image_url) ---
-# @router.put("/products/{product_id}", response_model=schemas.Product)
-# def update_product(
-#     product_id: int,
-#     product_update: schemas.ProductUpdate, # Pydantic схема для обновления
-#     db: Session = Depends(get_db)
-# ):
-#     # Найдите товар
-#     stmt = select(models.Product).where(models.Product.id == product_id)
-#     result = db.execute(stmt)
-#     db_product = result.scalar_one_or_none()
-
-#     if not db_product:
-#         raise HTTPException(status_code=404, detail="Товар не найден")
-
-#     # Обновите только те поля, которые были переданы
-#     update_data = product_update.model_dump(exclude_unset=True)
-#     for field, value in update_data.items():
-#         setattr(db_product, field, value)
-
-#     db.commit()
-#     db.refresh(db_product)
-#     return db_product
-
-# ... другие роуты ...

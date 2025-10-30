@@ -7,6 +7,7 @@ from src.auth.dao import UsersDAO
 from src.dao.base_dao import BaseDAO
 from src.purchase.exceptions import CartEmptyException
 from src.purchase.order.models import Order, OrderItem
+from src.purchase.products.models import Product
 
 
 class OrdersDAO(BaseDAO):
@@ -19,6 +20,7 @@ class OrdersDAO(BaseDAO):
             .options(
                 selectinload(self.model.items)
                 .selectinload(OrderItem.product)
+                .selectinload(Product.category)
             )
             .where(self.model.id == order_id)
         )
@@ -32,6 +34,7 @@ class OrdersDAO(BaseDAO):
             .options(
                 selectinload(self.model.items)
                 .selectinload(OrderItem.product)
+                .selectinload(Product.category)
             )
         )
         result = await self._session.execute(stmt)
@@ -44,6 +47,7 @@ class OrdersDAO(BaseDAO):
             .options(
                 selectinload(self.model.items)
                 .selectinload(OrderItem.product)
+                .selectinload(Product.category)
             )
             .where(self.model.user_id == user_id)
         )

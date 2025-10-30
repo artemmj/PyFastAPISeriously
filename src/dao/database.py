@@ -22,26 +22,12 @@ session_factory: async_sessionmaker[AsyncSession] = async_sessionmaker(
 )
 
 
-async def get_session_with_commit() -> AsyncGenerator[AsyncSession, None]:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """Асинхронная сессия с автоматическим коммитом."""
     async with session_factory() as session:
         try:
             yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
-
-
-async def get_session_without_commit() -> AsyncGenerator[AsyncSession, None]:
-    """Асинхронная сессия без автоматического коммита."""
-    async with session_factory() as session:
-        try:
-            yield session
-        except Exception:
-            await session.rollback()
-            raise
+        except Exception as exc:
+            raise exc
         finally:
             await session.close()

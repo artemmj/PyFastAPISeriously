@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from src.settings import settings
 from src.dao.base_model import Base
 from src.auth.models import User, Role
-from src.purchase.products.models import Product
+from src.purchase.products.models import Product, ProductCategory
 from src.purchase.cart.models import Cart
 from src.purchase.order.models import Order, OrderItem
 

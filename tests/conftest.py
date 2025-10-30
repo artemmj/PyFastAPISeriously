@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 from src.auth.models import Role, RolesEnum
 from src.dao.base_model import Base
-from src.dao.database import get_session_with_commit, get_session_without_commit
+from src.dao.database import get_session
 from src.main import app 
 from src.settings import settings
 
@@ -61,14 +61,10 @@ async def async_db_session(clean_db): # Зависимость от clean_db
 @pytest_asyncio.fixture(scope="function")
 async def async_client(async_db_session):
 
-    def override_get_session_without_commit():
+    def override_get_session():
         yield async_db_session
 
-    def override_get_session_with_commit():
-        yield async_db_session
-
-    app.dependency_overrides[get_session_with_commit] = override_get_session_with_commit
-    app.dependency_overrides[get_session_without_commit] = override_get_session_without_commit
+    app.dependency_overrides[get_session] = override_get_session
 
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
         yield ac

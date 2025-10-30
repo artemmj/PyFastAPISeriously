@@ -133,6 +133,95 @@ export function useAdminProducts() {
         }
     }
 
+    // === Категории ===
+    const categories = ref([])
+    const categoriesLoading = ref(false)
+
+    const fetchCategories = async () => {
+        categoriesLoading.value = true
+        try {
+            const response = await apiFetch('/api/products/categories')
+            if (!response.ok) throw new Error('Не удалось загрузить категории')
+            categories.value = await response.json()
+        } catch (err) {
+            error.value = err.message
+        } finally {
+            categoriesLoading.value = false
+        }
+    }
+
+    const createCategory = async (categoryData) => {
+        saving.value = true
+        error.value = null
+        try {
+            const response = await apiFetch('/api/products/categories', {
+                method: 'POST',
+                body: JSON.stringify(categoryData)
+            })
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}))
+                throw new Error(errData.detail || 'Ошибка создания категории')
+            }
+            const newCategory = await response.json()
+            categories.value.push(newCategory)
+        } catch (err) {
+            error.value = err.message
+            throw err
+        } finally {
+            saving.value = false
+        }
+    }
+
+
+    // Обновить категорию
+    const updateCategory = async (categoryId, categoryData) => {
+        saving.value = true
+        error.value = null
+        try {
+            const response = await apiFetch(`/api/products/categories/${categoryId}`, {
+                method: 'PUT',
+                body: JSON.stringify(categoryData)
+            })
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}))
+                throw new Error(errData.detail || 'Ошибка обновления категории')
+            }
+            const updatedCategory = await response.json()
+            const index = categories.value.findIndex(c => c.id === categoryId)
+            if (index !== -1) {
+                categories.value[index] = updatedCategory
+            }
+        } catch (err) {
+            error.value = err.message
+            throw err
+        } finally {
+            saving.value = false
+        }
+    }
+
+    // Удалить категорию
+    const deleteCategory = async (categoryId) => {
+        if (!confirm('Удалить категорию? Все товары в ней останутся без категории.')) return
+
+        saving.value = true
+        error.value = null
+        try {
+            const response = await apiFetch(`/api/products/categories/${categoryId}`, {
+                method: 'DELETE'
+            })
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}))
+                throw new Error(errData.detail || 'Ошибка удаления категории')
+            }
+            categories.value = categories.value.filter(c => c.id !== categoryId)
+        } catch (err) {
+            error.value = err.message
+            throw err
+        } finally {
+            saving.value = false
+        }
+    }
+
     return {
         products,
         loading,
@@ -142,6 +231,12 @@ export function useAdminProducts() {
         updateProduct,
         deleteProduct,
         createProduct,
-        uploadImage
+        uploadImage,
+        categories,
+        categoriesLoading,
+        fetchCategories,
+        createCategory,
+        updateCategory,
+        deleteCategory
     }
 }

@@ -13,7 +13,7 @@ from src.auth.schemas import (
     UserModelRegisterSchema,
 )
 from src.auth.security import authenticate_user, set_tokens
-from src.dao.database import get_session_with_commit, get_session_without_commit
+from src.dao.database import get_session, get_session
 
 router = APIRouter()
 logger = loguru.logger
@@ -22,7 +22,7 @@ logger = loguru.logger
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(
     user_data: UserModelRegisterSchema,
-    session: AsyncSession = Depends(get_session_with_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> UserModelInfoSchema:
     dao = UsersDAO(session)
     user_data_dict = user_data.model_dump()
@@ -37,7 +37,7 @@ async def register_user(
 async def login_user(
     response: Response,
     user_data: UserModelAuthSchema,
-    session: AsyncSession = Depends(get_session_without_commit)
+    session: AsyncSession = Depends(get_session)
 ) -> AuthLoginSchema:
     dao = UsersDAO(session)
     user = await dao.get_one_by_filters(filters=EmailModel(email=user_data.email))

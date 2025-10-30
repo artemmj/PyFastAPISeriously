@@ -13,6 +13,7 @@ from src.dao.base_dao import BaseDAO
 from src.purchase.cart.dao import CartsDAO
 from src.purchase.cart.models import Cart, CartItem
 from src.purchase.order.models import Order, OrderItem
+from src.purchase.products.models import Product
 
 logger = loguru.logger
 
@@ -37,7 +38,7 @@ class UsersDAO(BaseDAO):
         return new_instance
 
     async def find_all(self, filters: UserFilter, sorting: Query = None):
-        """Находит всех юзеров, по фильтрам и с сортировкой."""
+        """Находит всех юзеров, по фильтрам и с сортировкой, с корзиной и заказами."""
         query = select(self.model)
 
         # Фильтрация
@@ -75,11 +76,13 @@ class UsersDAO(BaseDAO):
             selectinload(User.cart)
             .selectinload(Cart.items)
             .selectinload(CartItem.product)
-        ).options(
-            selectinload(User.orders)
-            .selectinload(Order.items)
-            .selectinload(OrderItem.product)
+            .selectinload(Product.category)
         )
+        # .options(
+        #     selectinload(User.orders)
+        #     .selectinload(Order.items)
+        #     .selectinload(OrderItem.product)
+        # )
 
         try:
             result = await self._session.execute(query)
@@ -97,6 +100,7 @@ class UsersDAO(BaseDAO):
                 selectinload(User.cart)
                 .selectinload(Cart.items)
                 .selectinload(CartItem.product)
+                .selectinload(Product.category)
             )
             .where(User.id == user_id)
         )

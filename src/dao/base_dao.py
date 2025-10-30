@@ -43,14 +43,14 @@ class BaseDAO(Generic[T]):
     async def add(self, **kwargs):
         new_instance = self.model(**kwargs)
         self._session.add(new_instance)
-        await self._session.flush()
+        await self._session.commit()
         return new_instance
 
     async def add_many(self, instances: List[BaseModel]):
         values_list = [item.model_dump(exclude_unset=True) for item in instances]
         new_instances = [self.model(**values) for values in values_list]
         self._session.add_all(new_instances)
-        await self._session.flush()
+        await self._session.commit()
         return new_instances
 
     async def update(self, id: int, values: BaseModel):
@@ -62,13 +62,13 @@ class BaseDAO(Generic[T]):
             .execution_options(synchronize_session="fetch")
         )
         await self._session.execute(query)
-        await self._session.flush()
+        await self._session.commit()
         return await self.get_one_by_id(id=id)
 
     async def delete(self, id: int):
         query = sqlalchemy_delete(self.model).filter_by(id=id)
         result = await self._session.execute(query)
-        await self._session.flush()
+        await self._session.commit()
         return result.rowcount
 
     async def count(self, filters: BaseModel | None = None):
@@ -94,5 +94,5 @@ class BaseDAO(Generic[T]):
             result = await self._session.execute(stmt)
             updated_count += result.rowcount
 
-        await self._session.flush()
+        await self._session.commit()
         return updated_count

@@ -13,7 +13,7 @@ from src.auth.schemas import (
     UserModelInfoSchema,
     UserModelUpdateSchema,
 )
-from src.dao.database import get_session_with_commit, get_session_without_commit
+from src.dao.database import get_session, get_session
 from src.auth.exceptions import UserNotFoundException
 
 router = APIRouter()
@@ -23,7 +23,7 @@ logger = loguru.logger
 @router.get('/about_me')
 async def get_about_me(
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session_without_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> UserModelInfoSchema:
     return await UsersDAO(session).get_user_with_cart(user.id)
 
@@ -31,7 +31,7 @@ async def get_about_me(
 @router.get("/roles")
 async def get_all_roles(
     admin_user: User = Depends(get_current_admin_user),
-    session: AsyncSession = Depends(get_session_without_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> List[RoleModelSchema]:
     return await RolesDAO(session).find_all()
 
@@ -44,7 +44,7 @@ async def get_all_users(
         "id:asc", # Значение по умолчанию
         description="Поле и направление сортировки, например: 'name:asc', 'email:desc'"
     ),
-    session: AsyncSession = Depends(get_session_without_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> List[UserModelInfoSchema]:
     return await UsersDAO(session).find_all(filters=filters, sorting=sorting)
 
@@ -53,7 +53,7 @@ async def get_all_users(
 async def get_user_by_id(
     id: int,
     admin_user: User = Depends(get_current_admin_user),
-    session: AsyncSession = Depends(get_session_without_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> UserModelInfoSchema:
     instance = await UsersDAO(session).get_user_with_cart(user_id=id)
     if not instance:
@@ -67,7 +67,7 @@ async def update_user(
     id: int,
     new_user_data: UserModelUpdateSchema,
     admin_user: User = Depends(get_current_admin_user),
-    session: AsyncSession = Depends(get_session_with_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> UserModelInfoSchema:
     dao = UsersDAO(session)
     upd_user = await dao.get_one_by_id(id=id)
@@ -80,7 +80,7 @@ async def update_user(
 async def delete_user(
     id: int,
     admin_user: User = Depends(get_current_admin_user),
-    session: AsyncSession = Depends(get_session_with_commit),
+    session: AsyncSession = Depends(get_session),
 ) -> None:
     dao = UsersDAO(session)
     del_user = await dao.get_one_by_id(id=id)
