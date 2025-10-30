@@ -10,6 +10,7 @@ const error = ref(null)
 let isFetching = false
 
 export function useProfile() {
+
     const fetchProfile = async () => {
         if (isFetching) return
         isFetching = true
@@ -37,7 +38,7 @@ export function useProfile() {
     }
 
     const isAdmin = computed(() => {
-        return profile.value?.role_id === 1 // ← адаптируй под твой role_id
+        return profile.value?.role_id === 1
     })
 
     return {

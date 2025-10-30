@@ -45,7 +45,7 @@ async def add_product(
         raise ProductNotFoundException
 
     carts_dao = CartsDAO(session)
-    cart = await carts_dao.get_one_by_filters(CartUserIdSchema(user_id=user.id))
+    cart = await carts_dao.get_user_cart(user_id=user.id)
     await carts_dao.add_product(cart.id, product_id)
     return await carts_dao.get_user_cart(user.id)
 

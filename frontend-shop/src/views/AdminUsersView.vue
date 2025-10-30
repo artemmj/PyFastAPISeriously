@@ -1,264 +1,201 @@
 <template>
-  <div class="admin-users">
-    <div class="container">
-      <!-- Форма создания нового пользователя -->
-      <div class="create-section">
-        <h2>Добавить пользователя</h2>
-        <form @submit.prevent="handleCreate" class="create-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Имя</label>
-              <input v-model="newUser.first_name" type="text" required />
+    <div class="admin-users">
+        <div class="container">
+            <div class="page-header">
+                <h1>Управление пользователями</h1>
+                <button @click="openCreateModal" class="btn btn-primary">+ Добавить пользователя</button>
             </div>
-            <div class="form-group">
-              <label>Фамилия</label>
-              <input v-model="newUser.last_name" type="text" required />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Email</label>
-              <input v-model="newUser.email" type="email" required />
-            </div>
-            <div class="form-group">
-              <label>Телефон</label>
-              <input v-model="newUser.phone_number" type="text" required />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Пароль</label>
-              <input v-model="newUser.password" type="password" minlength="6" required />
-            </div>
-            <div class="form-group">
-              <label>Роль</label>
-              <select v-model.number="newUser.role_id" class="form-select">
-                <option :value="1">Админ</option>
-                <option :value="2">Модератор</option>
-                <option :value="3">Пользователь</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" :disabled="saving" class="btn btn-primary">
-            {{ saving ? 'Создание...' : 'Создать пользователя' }}
-          </button>
-        </form>
-      </div>
 
-      <!-- Заголовок и таблица -->
-      <h1>Управление пользователями</h1>
+            <div v-if="loading && users.length === 0" class="status-message">Загрузка пользователей...</div>
+            <div v-else-if="error" class="status-message error">{{ error }}</div>
+            <div v-else-if="users.length === 0" class="status-message">Пользователи не найдены</div>
+            <div v-else class="users-table-wrapper">
+                <table class="users-table">
+                <thead>
+                    <tr>
+                    <th>ID</th>
+                    <th>Имя</th>
+                    <th>Email</th>
+                    <th>Телефон</th>
+                    <th>Роль</th>
+                    <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="user in users" :key="user.id">
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.first_name }} {{ user.last_name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.phone_number || '—' }}</td>
+                    <td>
+                        <span :class="`role-badge role-${user.role_id}`">
+                        {{ user.role_id === 1 ? 'Админ' : (user.role_id === 2 ? 'Модератор' : 'Пользователь') }}
+                        </span>
+                    </td>
+                    <td class="actions">
+                        <button @click="openEditModal(user)" class="btn btn-outline btn-sm">Редактировать</button>
+                        <button @click="() => deleteUser(user.id)" :disabled="saving" class="btn btn-danger btn-sm">
+                        Удалить
+                        </button>
+                    </td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
 
-      <div v-if="loading && users.length === 0" class="status-message">Загрузка пользователей...</div>
-      <div v-else-if="error" class="status-message error">{{ error }}</div>
-      <div v-else-if="users.length === 0" class="status-message">Пользователи не найдены</div>
-      <div v-else class="users-table-wrapper">
-        <table class="users-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Имя</th>
-              <th>Email</th>
-              <th>Телефон</th>
-              <th>Роль</th>
-              <th>Действия</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="user in users" :key="user.id">
-              <td>{{ user.id }}</td>
-              <td>
-                <div class="name-fields">
-                  <input
-                    :value="getEditedValue(user.id, 'first_name')"
-                    @input="e => setEditedValue(user.id, 'first_name', e.target.value)"
-                    type="text"
-                    class="form-input"
-                    :disabled="saving"
-                  />
-                  <input
-                    :value="getEditedValue(user.id, 'last_name')"
-                    @input="e => setEditedValue(user.id, 'last_name', e.target.value)"
-                    type="text"
-                    class="form-input"
-                    :disabled="saving"
-                  />
+            <!-- Модальное окно -->
+            <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
+                <div class="modal" @click.stop>
+                <div class="modal-header">
+                    <h3>{{ editingUser ? 'Редактировать пользователя' : 'Добавить пользователя' }}</h3>
+                    <button @click="closeModal" class="modal-close">&times;</button>
                 </div>
-              </td>
-              <td>
-                <input
-                  :value="getEditedValue(user.id, 'email')"
-                  @input="e => setEditedValue(user.id, 'email', e.target.value)"
-                  type="email"
-                  class="form-input"
-                  :disabled="saving"
-                />
-              </td>
-              <td>
-                <input
-                  :value="getEditedValue(user.id, 'phone_number')"
-                  @input="e => setEditedValue(user.id, 'phone_number', e.target.value)"
-                  type="text"
-                  class="form-input"
-                  :disabled="saving"
-                />
-              </td>
-              <td>
-                <select
-                  :value="getEditedValue(user.id, 'role_id')"
-                  @change="e => setEditedValue(user.id, 'role_id', parseInt(e.target.value))"
-                  :disabled="saving"
-                  class="role-select"
-                >
-                  <option :value="1">Админ</option>
-                  <option :value="2">Модератор</option>
-                  <option :value="3">Пользователь</option>
-                </select>
-              </td>
-              <td class="actions">
-                <button
-                  @click="saveUser(user.id)"
-                  :disabled="saving || !isUserModified(user.id)"
-                  class="btn btn-primary btn-sm"
-                >
-                  Сохранить
-                </button>
-                <button
-                  @click="resetUser(user.id)"
-                  :disabled="saving || !isUserModified(user.id)"
-                  class="btn btn-outline btn-sm"
-                >
-                  Отмена
-                </button>
-                <button
-                  @click="() => deleteUser(user.id)"
-                  :disabled="saving"
-                  class="btn btn-danger btn-sm"
-                >
-                  Удалить
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                <form @submit.prevent="handleSubmit" class="modal-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Имя</label>
+                            <input v-model="modalForm.first_name" type="text" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Фамилия</label>
+                            <input v-model="modalForm.last_name" type="text" required />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input v-model="modalForm.email" type="email" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Телефон</label>
+                            <input v-model="modalForm.phone_number" type="text" />
+                        </div>
+                    </div>
+                    <div v-if="!editingUser" class="form-row">
+                        <div class="form-group">
+                            <label>Пароль</label>
+                            <input v-model="modalForm.password" type="password" minlength="6" required />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Роль</label>
+                            <select v-model.number="modalForm.role_id" class="form-select">
+                                <option :value="1">Админ</option>
+                                <option :value="2">Модератор</option>
+                                <option :value="3">Пользователь</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" :disabled="saving" class="btn btn-primary">
+                            {{ saving ? 'Сохранение...' : (editingUser ? 'Сохранить' : 'Создать') }}
+                        </button>
+                        <button @click="closeModal" type="button" class="btn btn-outline">Отмена</button>
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAdminUsers } from '@/composables/useAdminUsers'
 
 const {
-  users,
-  loading,
-  saving,
-  error,
-  fetchUsers,
-  createUser,
-  updateUser,
-  deleteUser
+    users,
+    loading,
+    saving,
+    error,
+    fetchUsers,
+    createUser,
+    updateUser,
+    deleteUser
 } = useAdminUsers()
 
-// Данные нового пользователя
-const newUser = ref({
-  first_name: '',
-  last_name: '',
-  email: '',
-  phone_number: '',
-  password: '',
-  role_id: 3
+// Модалка
+const isModalOpen = ref(false)
+const editingUser = ref(null) // null = создание, объект = редактирование
+const modalForm = ref({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone_number: '',
+    password: '',
+    confirm_password: '',
+    role_id: 2
 })
 
-// Редактируемые копии существующих пользователей
-const editedUsers = ref({})
+// Открыть модалку создания
+const openCreateModal = () => {
+    editingUser.value = null
+    modalForm.value = {
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone_number: '',
+        password: '',
+        confirm_password: '',
+        role_id: 2
+    }
+    isModalOpen.value = true
+}
 
-const syncEditedUsers = () => {
-    const newEdited = {}
-    users.value.forEach(p => {
-        if (editedUsers.value[p.id]) {
-            newEdited[p.id] = { ...editedUsers.value[p.id] }
+// Открыть модалку редактирования
+const openEditModal = (user) => {
+    editingUser.value = user
+    modalForm.value = {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        phone_number: user.phone_number || '',
+        password: '', // не меняем пароль при редактировании
+        confirm_password: '',
+        role_id: user.role_id
+    }
+    isModalOpen.value = true
+}
+
+// Закрыть модалку
+const closeModal = () => {
+    isModalOpen.value = false
+    editingUser.value = null
+}
+
+// Отправка формы
+const handleSubmit = async () => {
+    try {
+        if (editingUser.value) {
+            // Редактирование
+            await updateUser(
+                editingUser.value.id,
+                {
+                    first_name: modalForm.value.first_name,
+                    last_name: modalForm.value.last_name,
+                    email: modalForm.value.email,
+                    phone_number: modalForm.value.phone_number,
+                    role_id: modalForm.value.role_id
+                    // пароль не отправляем
+                }
+        )
         } else {
-            newEdited[p.id] = { ...p }
+            // Создание
+            modalForm.value.confirm_password = modalForm.value.password
+            await createUser(modalForm.value)
         }
-    })
-    editedUsers.value = newEdited
-}
-
-// Безопасное чтение значения
-const getEditedValue = (userId, field) => {
-  return editedUsers.value[userId]?.[field] ?? ''
-}
-
-// Безопасная запись значения
-const setEditedValue = (userId, field, value) => {
-  if (!editedUsers.value[userId]) {
-    const original = users.value.find(u => u.id === userId)
-    editedUsers.value[userId] = original ? { ...original } : { id: userId }
-  }
-  editedUsers.value[userId][field] = value
-}
-
-// Проверка, были ли внесены изменения
-const isUserModified = (userId) => {
-  const original = users.value.find(u => u.id === userId)
-  const edited = editedUsers.value[userId]
-  if (!original || !edited) return false
-  return (
-    original.first_name !== edited.first_name ||
-    original.last_name !== edited.last_name ||
-    original.email !== edited.email ||
-    original.phone_number !== edited.phone_number ||
-    original.role_id !== edited.role_id
-  )
-}
-
-// Сохранить изменения
-const saveUser = async (userId) => {
-  try {
-    await updateUser(userId, editedUsers.value[userId])
-    // Обновляем editedUsers после успешного сохранения
-    const updated = users.value.find(u => u.id === userId)
-    if (updated) {
-      editedUsers.value[userId] = { ...updated }
+        closeModal()
+        fetchUsers()
+    } catch (err) {
+        console.error('Ошибка:', err)
     }
-  } catch (err) {
-    console.error('Ошибка сохранения пользователя:', err)
-  }
 }
 
-// Отменить изменения
-const resetUser = (userId) => {
-  const original = users.value.find(u => u.id === userId)
-  if (original) {
-    editedUsers.value[userId] = { ...original }
-  }
-}
-
-// Создать нового пользователя
-const handleCreate = async () => {
-  try {
-    await createUser(newUser.value)
-    // Сброс формы
-    newUser.value = {
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone_number: '',
-      password: '',
-      role_id: 2
-    }
-  } catch (err) {
-    console.error('Ошибка создания пользователя:', err)
-  }
-}
-
-// Загрузка при монтировании
+// Загрузка
 onMounted(() => {
-  fetchUsers().then(syncEditedUsers)
+    fetchUsers()
 })
-
-watch(users, syncEditedUsers)
 </script>
 
 <style scoped>
@@ -313,15 +250,6 @@ watch(users, syncEditedUsers)
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
-}
-
-.name-fields {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.name-fields .form-input {
-  flex: 1;
 }
 
 /* Заголовок таблицы */
@@ -432,15 +360,207 @@ h1 {
   cursor: not-allowed;
 }
 
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  color: #2c3e50;
+}
+
+/* Таблица */
+.users-table-wrapper {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.users-table th,
+.users-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.users-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.role-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.role-1 {
+  background: #e3f2fd;
+  color: #d40f0f;
+}
+
+.role-2 {
+  background: #f1f8e9;
+  color: #1b38ac;
+}
+
+.role-3 {
+  background: #f1f8e9;
+  color: #388e3c;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Модальное окно */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #999;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+.modal-form {
+  padding: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Кнопки */
+.btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-size: 0.95rem;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid #3498db;
+  color: #3498db;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: #f0f8ff;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c0392b;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
   }
-
-  .name-fields {
+  .modal-actions {
     flex-direction: column;
-    gap: 0.5rem;
+  }
+  .btn {
+    width: 100%;
   }
 }
 </style>

@@ -2,18 +2,27 @@
 import { ref } from 'vue'
 import { apiFetch } from '@/utils/api'
 
+const cart = ref({ items: [] })
+const loading = ref(false)
+const error = ref(null)
+
 export function useCart() {
-    const cart = ref(null)
-    const loading = ref(false)
-    const error = ref(null)
 
     const fetchCart = async () => {
+        if (loading.value) return // уже загружается
         loading.value = true
         error.value = null
-
         try {
             const response = await apiFetch('/api/users/about_me')
-            if (!response.ok) throw new Error('Не удалось загрузить корзину')
+            if (!response.ok) {
+                if (response.status === 401) {
+                    localStorage.removeItem('access_token')
+                    localStorage.removeItem('refresh_token')
+                    cart.value = null
+                    return
+                }
+                throw new Error('Не удалось загрузить корзину')
+            }
             const data = await response.json()
             cart.value = data.cart
         } catch (err) {

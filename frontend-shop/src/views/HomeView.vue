@@ -85,17 +85,25 @@ import { computed, onMounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { useProducts } from '@/composables/useProducts'
 import ProductCard from '@/components/ProductCard.vue'
+import { useCart } from '@/composables/useCart'
 
 const { accessToken } = useAuth()
 const isAuthenticated = computed(() => !!accessToken.value)
 const { products, fetchProducts } = useProducts()
+const { fetchCart } = useCart()
 
 const loadProducts = () => {
     fetchProducts()
+    fetchCart()
+}
+
+const loadCart = () => {
+    fetchCart()
 }
 
 onMounted(() => {
     loadProducts()
+    loadCart()
 })
 </script>
 

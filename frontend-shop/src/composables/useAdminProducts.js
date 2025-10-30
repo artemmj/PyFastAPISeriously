@@ -119,14 +119,11 @@ export function useAdminProducts() {
             }
 
             const result = await response.json()
-            
-            // Обновляем ТОЛЬКО глобальный список товаров
+            // Обновляем глобальный список
             const product = products.value.find(p => p.id === productId)
             if (product) {
                 product.image_url = result.image_url
             }
-
-            // ✅ Возвращаем обновлённый image_url, чтобы компонент сам обновил editedProducts
             return result.image_url
         } catch (err) {
             error.value = err.message

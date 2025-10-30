@@ -2,17 +2,11 @@
 <template>
     <div class="catalog-page">
         <h1 class="page-title">Каталог товаров</h1>
-
-        <!-- Состояние: загрузка -->
         <div v-if="loading" class="status-message">Загрузка товаров...</div>
-
-        <!-- Состояние: ошибка -->
         <div v-else-if="error" class="status-message error">
             Ошибка: {{ error }}
             <button @click="loadProducts" class="btn btn-primary retry-btn">Повторить</button>
         </div>
-
-        <!-- Состояние: успех -->
         <div v-else class="products-container">
             <div v-if="products.length === 0" class="status-message">
                 Товары не найдены
@@ -30,12 +24,14 @@
 
 <script setup>
 // Импортируем компонент и composable
+import { onMounted, computed } from 'vue'
 import ProductCard from '@/components/ProductCard.vue'
 import { useProducts } from '@/composables/useProducts'
-import { onMounted, computed } from 'vue'
+import { useCart } from '@/composables/useCart'
 
 // Инициализируем логику загрузки
 const { products, loading, error, fetchProducts } = useProducts()
+const { fetchCart } = useCart()
 
 // Загружаем товары при входе на страницу
 const loadProducts = () => {
@@ -44,6 +40,11 @@ const loadProducts = () => {
 
 onMounted(() => {
     loadProducts()
+    // Загружаем корзину ОДИН РАЗ при входе в каталог
+    const token = localStorage.getItem('access_token')
+    if (token) {
+        fetchCart()
+    }
 })
 </script>
 
