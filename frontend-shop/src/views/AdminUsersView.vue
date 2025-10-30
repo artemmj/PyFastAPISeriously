@@ -192,7 +192,7 @@ const handleSubmit = async () => {
     }
 }
 
-// Загрузка
+// Загрузка при монтировании
 onMounted(() => {
     fetchUsers()
 })
